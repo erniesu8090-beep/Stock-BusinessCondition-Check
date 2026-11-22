@@ -1,0 +1,2775 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>台股大戶撤退與籌碼風險判讀儀表板</title>
+  <link rel="icon" type="image/x-icon" href="../assets/app.ico" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans TC', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans TC', sans-serif;
+      background-color: #FAF7F2;
+      color: #1E2022;
+    }
+    /* 暖灰細緻滑桿樣式 */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 0.42rem;
+      border-radius: 4px;
+      background: #E5E0D5;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      margin-top: -5px;
+      background-color: #1E2022;
+      height: 1.05rem;
+      width: 1.05rem;
+      border-radius: 4px;
+      border: 2px solid #FAF7F2;
+      box-shadow: 0 1px 2px rgba(30, 32, 34, 0.25);
+      transition: transform 0.12s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+<body class="bg-[#FAF7F2] text-[#1E2022] antialiased min-h-screen flex flex-col">
+
+  <!-- 頂部導覽與情境切換列 -->
+  <header class="bg-[#F3EFE6] border-b border-[#E5E0D5] sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <span class="inline-block w-2 h-5 rounded-sm bg-[#1E2022]"></span>
+          <h1 class="text-base sm:text-lg font-bold text-[#1E2022] tracking-tight">台股大戶撤退與籌碼風險判讀儀表板</h1>
+          <span id="connModeBadge" class="text-[11px] font-medium px-2 py-0.5 rounded bg-[#E5E0D5] text-[#45484B]">檢查連線模式中</span>
+        </div>
+        <p class="text-xs text-[#5C5F62] mt-0.5">
+          整合期現貨籌碼、散戶小台/微台多空比、融資維持率、權值防線與日線 KD，量化辨識「撤退前兆」與「踩踏落底」
+        </p>
+      </div>
+
+      <!-- 情境模擬快切與設定按鈕 -->
+      <div class="flex flex-wrap items-center gap-1.5">
+        <span class="text-xs font-medium text-[#5C5F62] mr-1">情境：</span>
+        <button type="button" onclick="applyPreset('current')" class="px-2.5 py-1.5 text-xs font-semibold rounded-md border border-[#1E2022] bg-[#1E2022] text-[#FAF7F2] hover:bg-[#333639] transition">
+          最新真實盤勢
+        </button>
+        <button type="button" onclick="applyPreset('bull')" class="px-2.5 py-1.5 text-xs font-medium rounded-md border border-[#D5CFC2] bg-[#FAF7F2] hover:bg-[#EAE4D7] text-[#1E2022] transition">
+          多頭穩健控盤
+        </button>
+        <button type="button" onclick="applyPreset('exit1015')" class="px-2.5 py-1.5 text-xs font-medium rounded-md border border-[#D97706]/40 bg-[#FEF3C7]/70 hover:bg-[#FEF3C7] text-[#92400E] transition">
+          大戶撤退前夕
+        </button>
+        <button type="button" onclick="applyPreset('recovery')" class="px-2.5 py-1.5 text-xs font-medium rounded-md border border-[#15803D]/35 bg-[#DCFCE7]/70 hover:bg-[#DCFCE7] text-[#166534] transition">
+          落底恢復買進
+        </button>
+        <button type="button" onclick="toggleSettingsPanel()" class="px-2.5 py-1.5 text-xs font-medium rounded-md border border-[#D5CFC2] bg-[#FFFDF9] hover:bg-[#EAE4D7] text-[#5C5F62] transition ml-1" title="設定離線 Gemini API Key 備援">
+          ⚙ 同步設定
+        </button>
+      </div>
+    </div>
+
+    <!-- 可摺疊：備援 API Key 設定抽屜 -->
+    <div id="settingsPanel" class="hidden border-t border-[#E5E0D5] bg-[#FAF7F2]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div class="text-[#5C5F62] leading-relaxed">
+          <strong class="text-[#1E2022]">雙通道同步說明：</strong>
+          開啟 <code class="px-1 py-0.5 rounded bg-[#EAE4D7] text-[#1E2022]">start_dashboard.bat</code> 時，會直接從證交所／期交所免 Key 抓取精準數據。
+          若僅離線開啟本 HTML 檔，您可選填自己的 Gemini API Key（僅存於您本機瀏覽器 <code class="px-1 py-0.5 rounded bg-[#EAE4D7]">localStorage</code>，絕不上傳他處）作為 AI 聯網備援。
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <input id="geminiApiKeyInput" type="password" placeholder="選填 Gemini API Key (AIza...)" class="w-56 px-2.5 py-1.5 rounded-md border border-[#D5CFC2] bg-[#FFFDF9] text-xs text-[#1E2022] focus:outline-none focus:border-[#1E2022]" />
+          <button type="button" onclick="saveGeminiKey()" class="px-3 py-1.5 rounded-md bg-[#1E2022] text-[#FAF7F2] font-medium hover:bg-[#333639] transition">儲存</button>
+          <button type="button" onclick="clearGeminiKey()" class="px-2.5 py-1.5 rounded-md border border-[#D5CFC2] bg-[#FFFDF9] text-[#5C5F62] hover:bg-[#EAE4D7] transition">清除</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主內容區 -->
+  <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 py-5 flex-1 space-y-5">
+
+    <!-- 即時市場數據同步橫幅 -->
+    <section class="bg-[#1E2022] text-[#FAF7F2] rounded-md border border-[#333639] p-4 space-y-3">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="space-y-1.5">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
+            <span class="text-xs font-semibold tracking-wide text-[#E5E0D5]">即時市場數據同步（Python 官方 API 直連 / AI 備援）</span>
+            <span id="syncTimestamp" class="text-[11px] text-[#E5E0D5] bg-[#2D3033] border border-[#404448] px-2 py-0.5 rounded">基準日：載入中</span>
+            <span id="twiiBadge" class="text-[11px] font-semibold px-2 py-0.5 rounded bg-[#2D3033] text-[#FCD34D]">加權 --</span>
+          </div>
+          <p id="liveMarketBrief" class="text-xs sm:text-sm text-[#EAE4D7] leading-relaxed">
+            正在載入最新收盤與籌碼數據...
+          </p>
+        </div>
+        <div class="shrink-0 flex flex-col sm:flex-row gap-2">
+          <button type="button" id="syncBtn" onclick="syncLiveMarketData()" class="px-4 py-2 rounded-md bg-[#FAF7F2] text-[#1E2022] hover:bg-[#E5E0D5] font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-2">
+            <svg id="syncIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span id="syncBtnText">一鍵同步最新市場數據</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 資料來源與官方籌碼一鍵核對捷徑 -->
+      <div class="pt-2 border-t border-[#333639] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-[#A8A6A1]">
+        <div id="syncSources" class="flex flex-wrap items-center gap-2">
+          <span>資料源：TWSE 證交所 / TAIFEX 期交所 / Yahoo Finance</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-[#85878A]">官方人工核對：</span>
+          <a href="https://www.twse.com.tw/zh/trading/foreign/bfi82u.html" target="_blank" rel="noopener noreferrer" class="underline hover:text-[#FAF7F2]">證交所法人</a>
+          <span>·</span>
+          <a href="https://www.taifex.com.tw/cht/3/futContractsDate" target="_blank" rel="noopener noreferrer" class="underline hover:text-[#FAF7F2]">期交所淨部位</a>
+          <span>·</span>
+          <a href="https://www.wantgoo.com/futures/retail-indicator/mtx" target="_blank" rel="noopener noreferrer" class="underline hover:text-[#FAF7F2]">玩股網小台多空比</a>
+          <span>·</span>
+          <a href="https://www.macromicro.me/charts/45071/taiwan-margin-maintenance-ratio" target="_blank" rel="noopener noreferrer" class="underline hover:text-[#FAF7F2]">融資維持率</a>
+          <span>·</span>
+          <a href="https://www.tdcc.com.tw/portal/zh/smWeb/qryStock" target="_blank" rel="noopener noreferrer" class="underline hover:text-[#FAF7F2]">集保千張大戶</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 巨型買賣決策指標語燈號 -->
+    <section id="actionSignalBanner" class="rounded-md border border-[#E5E0D5] bg-[#FFFDF9] border-l-8 border-l-[#0369A1] p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div class="flex items-start sm:items-center gap-4">
+        <div id="signalPillBox" class="shrink-0 px-4 py-2.5 rounded-md bg-[#E0F2FE] border border-[#0369A1]/40 text-center min-w-[136px]">
+          <div id="signalPillLabel" class="text-[10px] font-semibold tracking-wider text-[#075985]">目前行動指令</div>
+          <div id="signalVerbText" class="text-xl sm:text-2xl font-extrabold text-[#0369A1] tracking-tight mt-0.5">左側試單</div>
+        </div>
+        <div class="space-y-1">
+          <div id="signalHeadline" class="text-base sm:text-xl font-bold text-[#1E2022]">正在判讀目前盤勢行動方向...</div>
+          <p id="signalSubReason" class="text-xs sm:text-sm text-[#5C5F62]">整合大戶期現貨、融資維持率與觀察名單買點位置即時計算。</p>
+        </div>
+      </div>
+      <div class="shrink-0 grid grid-cols-2 gap-2.5 text-center sm:min-w-[270px]">
+        <div class="px-3 py-2 rounded bg-[#F3EFE6] border border-[#E5E0D5]">
+          <div class="text-[10px] text-[#5C5F62]">大盤操作節奏</div>
+          <div id="signalPaceText" class="text-xs sm:text-sm font-bold text-[#1E2022] mt-0.5">--</div>
+        </div>
+        <div class="px-3 py-2 rounded bg-[#F3EFE6] border border-[#E5E0D5]">
+          <div class="text-[10px] text-[#5C5F62]">觀察名單達買點</div>
+          <div id="signalWatchlistCountText" class="text-xs sm:text-sm font-bold text-[#15803D] mt-0.5">-- / 12 檔</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 核心診斷與個人資金部位試算（雙欄高資訊密度） -->
+    <section class="grid grid-cols-1 xl:grid-cols-12 gap-5">
+
+      <!-- 左 8 欄：系統風險儀表與實戰判讀 -->
+      <div id="resultCard" class="xl:col-span-8 bg-[#FFFDF9] rounded-md border border-[#E5E0D5] border-l-4 border-l-[#1E2022] p-5 space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+          <!-- 圓弧儀表 -->
+          <div class="md:col-span-4 flex flex-col items-center justify-center p-3.5 rounded-md bg-[#F3EFE6] border border-[#E5E0D5]">
+            <span class="text-[11px] font-semibold tracking-wider text-[#5C5F62] mb-1.5">大戶撤退與系統性風險指數</span>
+            <div class="relative w-44 h-24 overflow-hidden flex items-end justify-center">
+              <svg viewBox="0 0 200 110" class="w-full h-full">
+                <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#E5E0D5" stroke-width="16" stroke-linecap="butt" />
+                <path id="gaugeArc" d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#1E2022" stroke-width="16" stroke-linecap="butt"
+                      stroke-dasharray="251.2" stroke-dashoffset="125.6" class="transition-all duration-500 ease-out" />
+              </svg>
+              <div class="absolute bottom-0 text-center">
+                <span id="riskScoreText" class="text-3xl font-bold text-[#1E2022]">50</span>
+                <span class="text-xs text-[#5C5F62] font-medium">/ 100</span>
+              </div>
+            </div>
+            <div id="stageBadge" class="mt-2.5 px-3 py-1 rounded text-xs font-semibold bg-[#E5E0D5] text-[#1E2022] text-center">
+              盤整觀察期
+            </div>
+          </div>
+
+          <!-- 診斷文案與觸發訊號 -->
+          <div class="md:col-span-8 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2 border-b border-[#E5E0D5] pb-2.5">
+              <div>
+                <h2 id="diagnosisTitle" class="text-base sm:text-lg font-bold text-[#1E2022]">盤面結構判讀結果</h2>
+                <p class="text-xs text-[#5C5F62] mt-0.5">調整下方指標滑桿可即時模擬推演風險與資金應對策略</p>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button type="button" onclick="saveCurrentSnapshot()" class="px-2.5 py-1.5 text-xs font-medium rounded-md border border-[#D5CFC2] bg-[#F3EFE6] text-[#1E2022] hover:bg-[#E5E0D5] transition">
+                  儲存紀錄
+                </button>
+                <button type="button" onclick="copyReport()" class="px-2.5 py-1.5 text-xs font-medium rounded-md bg-[#1E2022] text-[#FAF7F2] hover:bg-[#333639] transition">
+                  複製摘要
+                </button>
+              </div>
+            </div>
+
+            <p id="diagnosisSummary" class="text-xs sm:text-sm text-[#2E3134] leading-relaxed">
+              正在計算目前籌碼結構...
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="p-3 rounded-md bg-[#FAF7F2] border border-[#E5E0D5]">
+                <div class="text-[11px] font-semibold text-[#5C5F62] mb-1">核心觸發警訊</div>
+                <ul id="triggeredSignals" class="text-xs text-[#1E2022] space-y-1 list-disc list-inside">
+                  <li>尚無極端異常訊號</li>
+                </ul>
+              </div>
+              <div class="p-3 rounded-md bg-[#FAF7F2] border border-[#E5E0D5]">
+                <div class="text-[11px] font-semibold text-[#5C5F62] mb-1">大戶思維應對策略</div>
+                <p id="actionAdvice" class="text-xs text-[#1E2022] leading-relaxed">
+                  維持正常部位配置。
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右 4 欄：個人資金與加減碼金額試算器 -->
+      <div class="xl:col-span-4 bg-[#FFFDF9] rounded-md border border-[#E5E0D5] p-5 flex flex-col justify-between space-y-3">
+        <div>
+          <div class="flex items-center justify-between border-b border-[#E5E0D5] pb-2 mb-3">
+            <div>
+              <span class="text-[11px] font-semibold text-[#5C5F62]">部位控管試算</span>
+              <h3 class="text-sm sm:text-base font-bold text-[#1E2022]">個人資金與加減碼試算器</h3>
+            </div>
+            <span id="targetAllocationBadge" class="text-xs font-semibold px-2 py-0.5 rounded bg-[#F3EFE6] border border-[#D5CFC2] text-[#1E2022]">建議 --</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label for="totalCapitalInput" class="block text-[11px] font-medium text-[#5C5F62] mb-1">預計總資金（萬元）</label>
+              <input id="totalCapitalInput" type="number" min="1" step="10" value="100" oninput="onCapitalChange()" class="w-full px-2.5 py-1.5 rounded-md border border-[#D5CFC2] bg-[#FAF7F2] text-sm font-semibold text-[#1E2022] focus:outline-none focus:border-[#1E2022]" />
+            </div>
+            <div>
+              <label for="currentHoldingInput" class="block text-[11px] font-medium text-[#5C5F62] mb-1">目前持股市值（萬元）</label>
+              <input id="currentHoldingInput" type="number" min="0" step="5" value="50" oninput="onCapitalChange()" class="w-full px-2.5 py-1.5 rounded-md border border-[#D5CFC2] bg-[#FAF7F2] text-sm font-semibold text-[#1E2022] focus:outline-none focus:border-[#1E2022]" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 mt-3 text-center">
+            <div class="p-2 rounded bg-[#F3EFE6] border border-[#E5E0D5]">
+              <div class="text-[10px] text-[#5C5F62]">目前持股比</div>
+              <div id="currRatioText" class="text-sm font-bold text-[#1E2022]">50%</div>
+            </div>
+            <div class="p-2 rounded bg-[#F3EFE6] border border-[#E5E0D5]">
+              <div class="text-[10px] text-[#5C5F62]">目前現金</div>
+              <div id="currCashText" class="text-sm font-bold text-[#1E2022]">50 萬</div>
+            </div>
+            <div class="p-2 rounded bg-[#F3EFE6] border border-[#E5E0D5]">
+              <div class="text-[10px] text-[#5C5F62]">目標持股金額</div>
+              <div id="targetAmountText" class="text-sm font-bold text-[#1E2022]">--</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 行動建議框 -->
+        <div id="positionActionBox" class="p-3 rounded-md bg-[#FAF7F2] border border-[#E5E0D5] border-l-4 border-l-[#B45309]">
+          <div id="positionActionTitle" class="text-xs font-bold text-[#1E2022]">行動試算結論</div>
+          <p id="positionActionDetail" class="text-xs text-[#2E3134] mt-1 leading-relaxed">
+            請輸入您的資金與持股以取得具體減碼或買進金額建議。
+          </p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 12 檔低本益比與成長潛力觀察名單：進場價位評估專區 -->
+    <section class="bg-[#FFFDF9] rounded-md border border-[#E5E0D5] p-5 space-y-4">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#E5E0D5] pb-3">
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h3 class="text-sm sm:text-base font-bold text-[#1E2022]"><span id="wlTitleCount">12</span> 檔觀察名單・可買進價位與進場評估</h3>
+            <span class="text-[11px] font-medium px-2 py-0.5 rounded bg-[#F3EFE6] border border-[#D5CFC2] text-[#5C5F62]">來源：台股低本益比與成長潛力觀察名單 + 自選追蹤</span>
+          </div>
+          <p class="text-xs text-[#5C5F62] mt-1">
+            結合最新收盤價、2026E/2027E 動態預估本益比、前瞻殖利率、52 週支撐區間與上方大盤風控位階即時評估
+          </p>
+        </div>
+        <!-- 分類篩選按鈕 -->
+        <div class="flex flex-wrap items-center gap-1.5" id="watchlistFilterBtns">
+          <button type="button" onclick="setWatchlistFilter('all')" data-filter="all" class="wl-filter-btn px-2.5 py-1.5 text-xs font-semibold rounded-md bg-[#1E2022] text-[#FAF7F2] border border-[#1E2022]">
+            全部 (<span id="wlCountAll">12</span>)
+          </button>
+          <button type="button" onclick="setWatchlistFilter('buyReady')" data-filter="buyReady" class="wl-filter-btn px-2.5 py-1.5 text-xs font-medium rounded-md bg-[#FAF7F2] text-[#166534] border border-[#15803D]/35 hover:bg-[#DCFCE7]">
+            🟢 已達買進價位 (<span id="wlCountBuy">0</span>)
+          </button>
+          <button type="button" onclick="setWatchlistFilter('attack')" data-filter="attack" class="wl-filter-btn px-2.5 py-1.5 text-xs font-medium rounded-md bg-[#FAF7F2] text-[#1E2022] border border-[#D5CFC2] hover:bg-[#EAE4D7]">
+            ⚡ 攻擊型 AI 成長 (<span id="wlCountAttack">7</span>)
+          </button>
+          <button type="button" onclick="setWatchlistFilter('defense')" data-filter="defense" class="wl-filter-btn px-2.5 py-1.5 text-xs font-medium rounded-md bg-[#FAF7F2] text-[#1E2022] border border-[#D5CFC2] hover:bg-[#EAE4D7]">
+            🛡️ 防禦高殖利率 (<span id="wlCountDefense">5</span>)
+          </button>
+        </div>
+      </div>
+
+      <!-- 大盤連動進場策略說明條 -->
+      <div id="watchlistMacroBanner" class="p-3 rounded-md bg-[#F3EFE6] border border-[#E5E0D5] border-l-4 border-l-[#0369A1] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+        <div id="watchlistMacroText" class="text-[#1E2022] leading-relaxed">
+          正在同步大盤位階對觀察名單的進場准許策略...
+        </div>
+        <div class="flex items-center gap-3 shrink-0 font-semibold text-[11px]">
+          <span class="text-[#15803D]">🟢 達買點：<span id="wlStatBuy">0</span></span>
+          <span class="text-[#B45309]">🟡 接近買點：<span id="wlStatNear">0</span></span>
+          <span class="text-[#BE123C]">🔴 暫觀望：<span id="wlStatWait">0</span></span>
+        </div>
+      </div>
+
+      <!-- 12 檔進場價位評估表格 -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="border-b border-[#E5E0D5] bg-[#F3EFE6] text-[#5C5F62]">
+              <th class="py-2 px-3 font-semibold">股號 / 股名</th>
+              <th class="py-2 px-3 font-semibold text-right">最新收盤</th>
+              <th class="py-2 px-3 font-semibold">技術位階與 52W</th>
+              <th class="py-2 px-3 font-semibold text-right">26E / 27E PE</th>
+              <th class="py-2 px-3 font-semibold text-right">27E 殖利率</th>
+              <th class="py-2 px-3 font-semibold">大戶籌碼動向（集保／主力）</th>
+              <th class="py-2 px-3 font-semibold">左側買區 / 右側轉強</th>
+              <th class="py-2 px-3 font-semibold">可買進價位評估（點擊展開解析）</th>
+            </tr>
+          </thead>
+          <tbody id="watchlistTableBody" class="divide-y divide-[#EAE4D7] text-[#1E2022]">
+            <tr>
+              <td colspan="8" class="py-5 text-center text-[#5C5F62]">正在載入 12 檔觀察名單即時估值與買點評估...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 四大核心判讀維度（含散戶小台多空比、融資維持率） -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+      <!-- 維度一：外資期現貨 (35%) -->
+      <div class="bg-[#FFFDF9] rounded-md border border-[#E5E0D5] p-5 space-y-4">
+        <div class="flex items-center justify-between border-b border-[#E5E0D5] pb-2.5">
+          <div>
+            <span class="text-[11px] font-semibold text-[#5C5F62]">維度一（權重 35%）</span>
+            <h3 class="text-sm sm:text-base font-bold text-[#1E2022]">外資期現貨與避險口數</h3>
+          </div>
+          <span id="dim1Score" class="text-xs font-semibold px-2.5 py-1 rounded bg-[#F3EFE6] border border-[#E5E0D5] text-[#1E2022]">0 / 35 分</span>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="flex justify-between items-center">
+            <label for="futuresNet" class="text-xs sm:text-sm font-medium text-[#2E3134]">外資台指期未平倉淨部位（口）</label>
+            <span id="futuresNetVal" class="text-sm font-bold text-[#1E2022]">-35,000 口</span>
+          </div>
+          <input id="futuresNet" type="range" min="-120000" max="40000" step="1000" value="-35000" class="w-full" oninput="updateDashboard()" />
+          <div class="flex justify-between text-[11px] text-[#5C5F62]">
+            <span>-12萬口 (極度空單)</span>
+            <span>-4萬口 (警戒線)</span>
+            <span>+4萬口 (偏多)</span>
+          </div>
+        </div>
+
+        <div class="space-y-1.5 pt-1">
+          <div class="flex justify-between items-center">
+            <label for="spotNet5d" class="text-xs sm:text-sm font-medium text-[#2E3134]">近 5 日外資現貨累計買賣超（億元）</label>
+            <span id="spotNet5dVal" class="text-sm font-bold text-[#1E2022]">-450 億元</span>
+          </div>
+          <input id="spotNet5d" type="range" min="-4500" max="2500" step="50" value="-450" class="w-full" oninput="updateDashboard()" />
+          <div class="flex justify-between text-[11px] text-[#5C5F62]">
+            <span>-4,500億 (連續提款)</span>
+            <span>-1,000億 (明顯撤出)</span>
+            <span>+2,500億 (資金回流)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 維度二：權值核心與金融防線 (25%) -->
+      <div class="bg-[#FFFDF9] rounded-md border border-[#E5E0D5] p-5 space-y-4">
+        <div class="flex items-center justify-between border-b border-[#E5E0D5] pb-2.5">
+          <div>
+            <span class="text-[11px] font-semibold text-[#5C5F62]">維度二（權重 25%）</span>
+            <h3 class="text-sm sm:text-base font-bold text-[#1E2022]">權值領頭羊與金融防線</h3>
+          </div>
+          <span id="dim2Score" class="text-xs font-semibold px-2.5 py-1 rounded bg-[#F3EFE6] border border-[#E5E0D5] text-[#1E2022]">0 / 25 分</span>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="flex justify-between items-center">
+            <label for="tsmcStatus" class="block text-xs sm:text-sm font-medium text-[#2E3134]">台積電（2330）均線與量價結構</label>
+            <span id="tsmcRefBadge" class="text-[11px] text-[#5C5F62]">--</span>
+          </div>
+          <select id="tsmcStatus" onchange="updateDashboard()" class="w-full rounded-md border border-[#D5CFC2] bg-[#FAF7F2] px-3 py-2 text-xs sm:text-sm text-[#1E2022] focus:outline-none focus:border-[#1E2022]">
+            <option value="0">站穩月線之上，拉回量縮有守（多頭控盤）</option>
+            <option value="3">急殺後不再破底，帶量站回 5/10 日均線（初步轉強）</option>
+            <option value="7">高檔爆量不漲或跌破 10 日線（大戶開始調節）</option>
+            <option value="14">帶量長黑跌破月／季／年線，外資連續賣超（主跌段警訊）</option>
+          </select>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="flex justify-between items-center">
+            <label for="financeStatus" class="block text-xs sm:text-sm font-medium text-[#2E3134]">金融類股指數（資金避風港）狀態</label>
+            <span id="financeRefBadge" class="text-[11px] text-[#5C5F62]">--</span>
+          </div>
+          <select id="financeStatus" onchange="updateDashboard()" class="w-full rounded-md border border-[#D5CFC2] bg-[#FAF7F2] px-3 py-2 text-xs sm:text-sm text-[#1E2022] focus:outline-none focus:border-[#1E2022]">
+            <option value="0">逆勢抗跌或溫和墊高（資金成功轉入防禦）</option>
+            <option value="5" selected>高檔橫盤滯漲，量能萎縮（觀望氣氛濃厚）</option>
+            <option value="11">跟隨電子股補跌，跌破波段支撐（系統性去槓桿）</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 維度三：散戶槓桿、小台多空比、融資維持率與大戶籌碼 (25%) -->
+      <div class="bg-[#FFFDF9] rounded-md border border-[#E5E0D5] p-5 space-y-4">
+        <div class="flex items-center justify-between border-b border-[#E5E0D5] pb-2.5">
+          <div>
+            <span class="text-[11px] font-semibold text-[#5C5F62]">維度三（權重 25%・升級實戰指標）</span>
+            <h3 class="text-sm sm:text-base font-bold text-[#1E2022]">散戶小台多空比、融資維持率與大戶流向</h3>
+          </div>
+          <span id="dim3Score" class="text-xs font-semibold px-2.5 py-1 rounded bg-[#F3EFE6] border border-[#E5E0D5] text-[#1E2022]">0 / 25 分</span>
+        </div>
+
+        <!-- 3A: 散戶小台/微台多空比 -->
+        <div class="space-y-1.5">
+          <div class="flex justify-between items-center">
+            <label for="retailMtxRatio" class="text-xs sm:text-sm font-medium text-[#2E3134]">
+              散戶小台＋微台綜合多空比（%）
+              <span id="retailMtxSubNote" class="text-[11px] font-normal text-[#5C5F62] ml-1"></span>
+            </label>
+            <span id="retailMtxVal" class="text-sm font-bold text-[#1E2022]">0.0%</span>
+          </div>
+          <input id="retailMtxRatio" type="range" min="-40" max="60" step="0.5" value="0" class="w-full" oninput="updateDashboard()" />
+          <div class="flex justify-between text-[11px] text-[#5C5F62]">
+            <span class="text-[#15803D] font-medium">-40% (散戶認輸翻空/有利築底)</span>
+            <span>0% (多空平衡)</span>
+            <span class="text-[#BE123C] font-medium">+60% (散戶狂接刀/高風險)</span>
+          </div>
+        </div>
+
+        <!-- 3B: 大盤整戶融資維持率 -->
+        <div class="space-y-1.5">
+          <div class="flex justify-between items-center">
+            <label for="marginMaintenanceRatio" class="text-xs sm:text-sm font-medium text-[#2E3134]">
+              大盤整戶融資維持率（%）
+              <span class="text-[11px] font-normal text-[#5C5F62] ml-1">（未達 130% 強制斷頭）</span>
+            </label>
+            <span id="marginMaintVal" class="text-sm font-bold text-[#1E2022]">160.0%</span>
+          </div>
+          <input id="marginMaintenanceRatio" type="range" min="120" max="185" step="0.5" value="160" class="w-full" oninput="updateDashboard()" />
+          <div class="flex justify-between text-[11px] text-[#5C5F62]">
+            <span class="text-[#0369A1] font-medium">120% (全面追繳斷頭/末跌清洗)</span>
+            <span>150% (警戒線)</span>
+            <span class="text-[#15803D] font-medium">185% (充裕安全)</span>
+          </div>
+        </div>
+
+        <!-- 3C + 3D 並排下拉 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <div class="space-y-1">
+            <label for="marginStatus" class="block text-xs font-medium text-[#2E3134]">融資餘額變化 <span id="marginRefBadge" class="text-[10px] text-[#5C5F62]"></span></label>
+            <select id="marginStatus" onchange="updateDashboard()" class="w-full rounded-md border border-[#D5CFC2] bg-[#FAF7F2] px-2.5 py-2 text-xs text-[#1E2022] focus:outline-none focus:border-[#1E2022]">
+              <option value="1">回檔且融資健康減肥</option>
+              <option value="6" selected>震盪/下跌但融資逆勢增（接刀）</option>
+              <option value="4">單日融資暴減（斷頭清洗中）</option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <label for="whaleTrend" class="block text-xs font-medium text-[#2E3134]">千張/400張大戶持股週變化 <span id="whaleRefBadge" class="text-[10px] text-[#5C5F62]"></span></label>
+            <select id="whaleTrend" onchange="updateDashboard()" class="w-full rounded-md border border-[#D5CFC2] bg-[#FAF7F2] px-2.5 py-2 text-xs text-[#1E2022] focus:outline-none focus:border-[#1E2022]">
+              <option value="0">連 2 週上升（大戶吸籌）</option>
+              <option value="2">低檔由降轉升（籌碼集中）</option>
+              <option value="4">高檔持平或微滑（減碼）</option>
+              <option value="6">連 2 週明顯下滑（撤退完成）</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 維度四：KD 指標與落底訊號檢核 (15%) -->
+      <div class="bg-[#FFFDF9] rounded-md border border-[#E5E0D5] p-5 space-y-4">
+        <div class="flex items-center justify-between border-b border-[#E5E0D5] pb-2.5">
+          <div>
+            <span class="text-[11px] font-semibold text-[#5C5F62]">維度四（權重 15%）</span>
+            <h3 class="text-sm sm:text-base font-bold text-[#1E2022]">日線 KD（9,3,3）與踩踏止跌檢核</h3>
+          </div>
+          <span id="dim4Score" class="text-xs font-semibold px-2.5 py-1 rounded bg-[#F3EFE6] border border-[#E5E0D5] text-[#1E2022]">0 / 15 分</span>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="flex justify-between items-center">
+            <label for="kdStatus" class="block text-xs sm:text-sm font-medium text-[#2E3134]">大盤日線 KD（9,3,3）目前型態</label>
+            <span id="kdRefBadge" class="text-[11px] font-semibold text-[#5C5F62]">K -- / D --</span>
+          </div>
+          <select id="kdStatus" onchange="updateDashboard()" class="w-full rounded-md border border-[#D5CFC2] bg-[#FAF7F2] px-3 py-2 text-xs sm:text-sm text-[#1E2022] focus:outline-none focus:border-[#1E2022]">
+            <option value="0">50 之上黃金交叉向上（多頭動能延續）</option>
+            <option value="3">20 以下低檔出現背離且黃金交叉向上（確認止跌／買點）</option>
+            <option value="8">80 以上高檔死亡交叉或反彈轉弱向下（轉弱警訊）</option>
+            <option value="12">20 以下低檔鈍化、尚未黃金交叉（空方控盤／尋底期）</option>
+          </select>
+        </div>
+
+        <div class="space-y-2 pt-1">
+          <label class="block text-xs sm:text-sm font-medium text-[#2E3134]">盤面恐慌與護盤落底條件勾選（複選）</label>
+          <div class="space-y-2">
+            <label class="flex items-start gap-2.5 text-xs text-[#2E3134] cursor-pointer">
+              <input id="chkPanicVol" type="checkbox" onchange="updateDashboard()" class="mt-0.5 rounded border-[#D5CFC2] text-[#1E2022] focus:ring-[#1E2022] w-4 h-4" />
+              <span>出現恐慌性爆量長黑或單日跳空重挫（多殺多踩踏特徵，+3 分風險）</span>
+            </label>
+            <label class="flex items-start gap-2.5 text-xs text-[#2E3134] cursor-pointer">
+              <input id="chkGovSupport" type="checkbox" onchange="updateDashboard()" class="mt-0.5 rounded border-[#D5CFC2] text-[#1E2022] focus:ring-[#1E2022] w-4 h-4" />
+              <span>官股行庫明顯護盤、投信連買或國安基金／限空令啟動穩盤</span>
+            </label>
+            <label class="flex items-start gap-2.5 text-xs text-[#2E3134] cursor-pointer">
+              <input id="chkDryVol" type="checkbox" onchange="updateDashboard()" class="mt-0.5 rounded border-[#D5CFC2] text-[#1E2022] focus:ring-[#1E2022] w-4 h-4" />
+              <span>急殺後成交量萎縮至「窒息量（低於 20 日均量 72%）」且不再破前低</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 本機歷史紀錄追蹤與趨勢圖 (localStorage) -->
+    <section class="bg-[#FFFDF9] rounded-md border border-[#E5E0D5] p-5 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E5E0D5] pb-3">
+        <div>
+          <h3 class="text-sm sm:text-base font-bold text-[#1E2022]">本機歷史風險紀錄與趨勢追蹤（瀏覽器自動保存）</h3>
+          <p class="text-xs text-[#5C5F62]">每日收盤同步後點擊「儲存紀錄」，即可追蹤大戶風險分數升降方向，並支援 JSON 匯出跨機備份</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button type="button" onclick="saveCurrentSnapshot()" class="px-3 py-1.5 text-xs font-semibold rounded-md bg-[#1E2022] text-[#FAF7F2] hover:bg-[#333639] transition">
+            + 儲存今日判讀紀錄
+          </button>
+          <button type="button" onclick="exportHistoryJson()" class="px-2.5 py-1.5 text-xs font-medium rounded-md border border-[#D5CFC2] bg-[#FAF7F2] hover:bg-[#EAE4D7] text-[#1E2022] transition">
+            匯出 JSON
+          </button>
+          <label class="px-2.5 py-1.5 text-xs font-medium rounded-md border border-[#D5CFC2] bg-[#FAF7F2] hover:bg-[#EAE4D7] text-[#1E2022] transition cursor-pointer">
+            匯入 JSON
+            <input type="file" accept=".json" class="hidden" onchange="importHistoryJson(event)" />
+          </label>
+          <button type="button" onclick="clearAllHistory()" class="px-2.5 py-1.5 text-xs font-medium rounded-md border border-[#BE123C]/30 bg-[#FFFDF9] hover:bg-[#FFE4E6] text-[#BE123C] transition">
+            清空
+          </button>
+        </div>
+      </div>
+
+      <!-- 近 10 次風險分數趨勢迷你圖 -->
+      <div id="historyTrendContainer" class="hidden p-3.5 rounded-md bg-[#FAF7F2] border border-[#E5E0D5]">
+        <div class="text-[11px] font-semibold text-[#5C5F62] mb-2">近期風險指數變化趨勢（近 10 筆）</div>
+        <div id="historyBars" class="flex items-end gap-2 h-28 pt-4"></div>
+      </div>
+
+      <!-- 歷史清單表格 -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="border-b border-[#E5E0D5] bg-[#F3EFE6] text-[#5C5F62]">
+              <th class="py-2 px-3 font-semibold">日期 / 基準</th>
+              <th class="py-2 px-3 font-semibold">加權指數</th>
+              <th class="py-2 px-3 font-semibold">外資期貨</th>
+              <th class="py-2 px-3 font-semibold">散戶小微台比</th>
+              <th class="py-2 px-3 font-semibold">融資維持率</th>
+              <th class="py-2 px-3 font-semibold">風險分數</th>
+              <th class="py-2 px-3 font-semibold">判讀位階</th>
+              <th class="py-2 px-3 font-semibold text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody" class="divide-y divide-[#EAE4D7] text-[#1E2022]">
+            <tr>
+              <td colspan="8" class="py-4 text-center text-[#5C5F62]">尚無已儲存的歷史紀錄，點擊上方「+ 儲存今日判讀紀錄」即可開始追蹤。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 實戰階段決策對照表 -->
+    <section class="bg-[#FFFDF9] rounded-md border border-[#E5E0D5] p-5">
+      <h3 class="text-sm sm:text-base font-bold text-[#1E2022] mb-3">台股大戶進出五階段實戰決策對照表</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="border-b border-[#E5E0D5] bg-[#F3EFE6] text-[#5C5F62]">
+              <th class="py-2 px-3 font-semibold">市場階段</th>
+              <th class="py-2 px-3 font-semibold">外資與大戶籌碼</th>
+              <th class="py-2 px-3 font-semibold">散戶小微台／融資維持率</th>
+              <th class="py-2 px-3 font-semibold">台積電／KD 結構</th>
+              <th class="py-2 px-3 font-semibold">建議持股水位</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#EAE4D7] text-[#2E3134]">
+            <tr>
+              <td class="py-2.5 px-3 font-semibold text-[#15803D]">1. 多頭控盤期</td>
+              <td class="py-2.5 px-3">期貨偏多或小額避險，現貨買超，大戶升</td>
+              <td class="py-2.5 px-3">散戶偏空或中性（&lt; +10%），維持率 &gt; 162%</td>
+              <td class="py-2.5 px-3">站穩月線，日 KD 50 之上金叉</td>
+              <td class="py-2.5 px-3 font-semibold">70% - 90%</td>
+            </tr>
+            <tr class="bg-[#FEF3C7]/40">
+              <td class="py-2.5 px-3 font-semibold text-[#B45309]">2. 大戶撤退警戒期</td>
+              <td class="py-2.5 px-3">期貨空單逾 4 萬口，現貨高檔連續提款</td>
+              <td class="py-2.5 px-3">散戶多單急增（&gt; +15%），維持率跌破 158%</td>
+              <td class="py-2.5 px-3">台積電爆量滯漲或破 10 日線，KD 80 死叉</td>
+              <td class="py-2.5 px-3 font-semibold">降至 20% - 35%</td>
+            </tr>
+            <tr class="bg-[#FFE4E6]/40">
+              <td class="py-2.5 px-3 font-semibold text-[#BE123C]">3. 主跌段高風險期</td>
+              <td class="py-2.5 px-3">期貨空單極端，外資千億提款，大戶空手</td>
+              <td class="py-2.5 px-3">散戶死撐做多，維持率逼近或跌破 148%</td>
+              <td class="py-2.5 px-3">台積電與金融股同步破月季線，KD 下破 50</td>
+              <td class="py-2.5 px-3 font-semibold">0% - 10%（保留現金）</td>
+            </tr>
+            <tr class="bg-[#E0F2FE]/45">
+              <td class="py-2.5 px-3 font-semibold text-[#0369A1]">4. 踩踏宣洩／末跌築底</td>
+              <td class="py-2.5 px-3">官股／國安基金護盤，期貨空單開始回補</td>
+              <td class="py-2.5 px-3">融資單日暴減斷頭、維持率 &lt; 142%、散戶翻空</td>
+              <td class="py-2.5 px-3">急殺後出現止跌下影線，KD 20 下低檔鈍化</td>
+              <td class="py-2.5 px-3 font-semibold">左側試單 15% - 30%</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 font-semibold text-[#15803D]">5. 籌碼沉澱恢復買進</td>
+              <td class="py-2.5 px-3">外資現貨轉買，期貨空單大減，大戶回補</td>
+              <td class="py-2.5 px-3">融資乾淨、散戶翻空（&lt; -10%）不敢進場</td>
+              <td class="py-2.5 px-3">量縮不破前低並站回 5/10 日線，KD 低檔金叉</td>
+              <td class="py-2.5 px-3 font-semibold">右側加碼 35% - 55%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Toast 提示訊息（改放左下以免與右下角 page-mascot 重疊） -->
+  <div id="toast" class="fixed bottom-5 left-5 bg-[#1E2022] text-[#FAF7F2] text-xs font-medium px-4 py-2.5 rounded-md shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 z-50 border border-[#333639]">
+    提示訊息
+  </div>
+
+  <!-- 右下角懸浮 page-mascot (kamran) 看盤小幫手 -->
+  <div id="mascotFloatingWrap" class="fixed bottom-4 right-4 z-40 flex flex-col items-end gap-2 pointer-events-none">
+    <!-- 盤勢語音泡泡 -->
+    <div id="mascotBubble" class="pointer-events-auto max-w-[260px] bg-[#FFFDF9] border border-[#1E2022] rounded-md shadow-md p-3 text-xs text-[#1E2022] relative transition-all duration-200">
+      <div class="flex items-center justify-between gap-2 mb-1">
+        <span class="font-bold text-[11px] text-[#0369A1]">Kamran 看盤提醒</span>
+        <button type="button" onclick="toggleMascotBubble(false)" class="text-[#5C5F62] hover:text-[#1E2022] text-xs leading-none px-1" title="收合提醒泡泡">×</button>
+      </div>
+      <p id="mascotBubbleText" class="leading-relaxed text-[11px] text-[#2E3134]">
+        我會盯著你的滑鼠，點我一下可以切換盤勢提醒喔！
+      </p>
+    </div>
+
+    <div class="flex items-end gap-1.5 pointer-events-auto">
+      <button type="button" id="mascotBubbleReopenBtn" onclick="toggleMascotBubble(true)" class="hidden px-2 py-1 rounded-md bg-[#FFFDF9] border border-[#D5CFC2] text-[11px] font-medium text-[#1E2022] shadow-sm hover:bg-[#F3EFE6] mb-3" title="展開盤勢提醒">
+        💬 提醒
+      </button>
+      <!-- page-mascot 核心按鈕結構 (9宮格視線追蹤 + 表情反應 + 彈性壓縮動畫) -->
+      <button id="pageMascotBtn" type="button" onclick="boopMascot()" aria-label="Boop the kamran mascot" title="點我互動！連點 4 次會頭暈" style="position:relative;display:block;flex-shrink:0;width:116px;height:116px;padding:0;border:0;background:transparent;appearance:none;cursor:pointer;user-select:none;filter:drop-shadow(0 4px 10px rgba(30,32,34,0.16));">
+        <span id="mascotSquashLayer" style="position:relative;display:block;width:100%;height:100%;transform-origin:50% 78%;">
+          <span id="mascotDirLayer" style="position:absolute;inset:0;background-size:300% 300%;background-repeat:no-repeat;background-image:url('../assets/mascots/kamran-directions.webp');background-position:50% 50%;opacity:1;"></span>
+          <span id="mascotReactLayer" style="position:absolute;inset:0;background-size:300% 300%;background-repeat:no-repeat;background-image:url('../assets/mascots/kamran-reactions.webp');background-position:0% 0%;opacity:0;"></span>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 內嵌最新抓取的市場數據 JSON (由 Python server.py 自動同步更新) -->
+  <script id="embedded-market-data" type="application/json">
+{
+  "fetchedAt": "2026-11-22 16:41:05",
+  "dateLabel": "2026/11/20 收盤",
+  "dataDate": "2026-11-20",
+  "summary": "加權指數收 36,033 點（-2394 點 / -6.23%），成交金額 9,353 億元（20日均量比 0.96x），外資台指期淨部位 -97,863 口、近 5 日現貨 -2,187 億元，散戶小台＋微台綜合多空比 +18.0%（純小台 -1.8%），台積電收 2000.0 元（月線 2276.0），大盤單日融資 -491.4 億元（維持率推算 128.2%），日線 K=22.1 / D=36.5。",
+  "futuresNet": -97863,
+  "futuresNetRaw": -97863,
+  "spotNet5d": -2187,
+  "spotNet5dRaw": -2187,
+  "spotNet1d": -95.11,
+  "trustNet5d": -84.7,
+  "retailMtxRatio": 18.0,
+  "retailMtxOnlyRatio": -1.8,
+  "marginMaintenanceRatio": 128.2,
+  "marginBalanceBillion": 4352.27,
+  "marginChange1dBillion": -491.41,
+  "marginChange5dBillion": -1013.72,
+  "tsmcStatus": "14",
+  "financeStatus": "11",
+  "marginStatus": "4",
+  "whaleTrend": "6",
+  "kdStatus": "12",
+  "chkPanicVol": true,
+  "chkGovSupport": false,
+  "chkDryVol": false,
+  "metrics": {
+    "twiiClose": 36033.29,
+    "twiiChange": -2393.6,
+    "twiiChangePct": -6.23,
+    "twii5dPct": -17.5,
+    "volumeBillion": 9353.1,
+    "avgVolume20dBillion": 9715.46,
+    "volumeRatio": 0.96,
+    "kd": {
+      "k": 22.1,
+      "d": 36.52,
+      "prev_k": 31.48,
+      "prev_d": 43.73
+    },
+    "tsmc": {
+      "close": 2000.0,
+      "change_pct": -4.76,
+      "ma5": 2132.0,
+      "ma10": 2226.5,
+      "ma20": 2276.0,
+      "ma60": 2394.4
+    },
+    "finance": {
+      "close": 3215.57,
+      "change_1d_pct": -5.82,
+      "change_5d_pct": -14.14,
+      "ma20": 3631.13
+    },
+    "taifex": {
+      "txForeignNet": -97863,
+      "mtxInstNet": 565,
+      "mtxTotalOi": 31483,
+      "tmfInstNet": -47192,
+      "tmfTotalOi": 89064,
+      "retailMtxOnlyRatio": -1.8,
+      "retailCombinedRatio": 18.0
+    },
+    "whaleStats": {
+      "tdccDate": "20261120",
+      "totalTracked": 12,
+      "dumping4wCount": 7,
+      "acc4wCount": 2,
+      "dumping1wCount": 7
+    }
+  },
+  "watchlist": [
+    {
+      "code": "2376",
+      "name": "技嘉",
+      "sector": "AI 伺服器／板卡",
+      "category": "attack",
+      "close": 248.0,
+      "changePct": -4.62,
+      "ma5": 267.3,
+      "ma10": 282.9,
+      "ma20": 308.95,
+      "kd": {
+        "k": 8.6,
+        "d": 12.07,
+        "prev_k": 9.18,
+        "prev_d": 13.8
+      },
+      "pe2026E": 6.85,
+      "pe2027E": 6.42,
+      "div2027E": 23.9,
+      "yield2027E": 9.64,
+      "payoutPct": 65.9,
+      "low52": 206.5,
+      "high52": 402.0,
+      "dist52LowPct": 20.1,
+      "buyZoneLow": 225.0,
+      "buyZoneHigh": 250.0,
+      "rightConfirmPrice": 282.9,
+      "entryStatus": "buy_left",
+      "entryLabel": "達左側首波試單價",
+      "entryReason": "進入合理買進區間（225.0~250.0 元），前瞻 PE 6.42 倍，適合小額分批建立第 1 批底倉。",
+      "note": "2026 前三季 EPS 達 30.52 元、毛利率近 12%，2027E 本益比壓縮至 7 倍以下，前瞻殖利率逾 9%。",
+      "chips": {
+        "tdccDate": "20261120",
+        "big1000Holders": 89,
+        "big1000Pct": 65.14,
+        "big1000Delta1w": null,
+        "big400Holders": 163,
+        "big400Pct": 71.79,
+        "big400Delta1w": -1.4,
+        "big400Delta4w": -0.8,
+        "retailHolders": 95883,
+        "retailHoldersDelta1w": null,
+        "retailPct": 14.14,
+        "totalHolders": 98573,
+        "totalHoldersDelta1w": null,
+        "broker": {
+          "mainBuyLots": 6142,
+          "mainSellLots": 5505,
+          "mainNetLots": 637,
+          "topBuyer": "美商高盛",
+          "topBuyerLots": 2245,
+          "topSeller": "凱基",
+          "topSellerLots": 2531
+        },
+        "chipSignal": "neutral",
+        "chipLabel": "4週大戶減・主力轉買"
+      }
+    },
+    {
+      "code": "2357",
+      "name": "華碩",
+      "sector": "品牌電腦／AI",
+      "category": "attack",
+      "close": 756.0,
+      "changePct": -5.5,
+      "ma5": 811.8,
+      "ma10": 847.7,
+      "ma20": 881.9,
+      "kd": {
+        "k": 21.58,
+        "d": 34.85,
+        "prev_k": 29.42,
+        "prev_d": 41.48
+      },
+      "pe2026E": 9.69,
+      "pe2027E": 9.99,
+      "div2027E": 54.6,
+      "yield2027E": 7.22,
+      "payoutPct": 70.0,
+      "low52": 490.0,
+      "high52": 1030.0,
+      "dist52LowPct": 54.3,
+      "buyZoneLow": 690.0,
+      "buyZoneHigh": 745.0,
+      "rightConfirmPrice": 847.7,
+      "entryStatus": "watch_near",
+      "entryLabel": "估值偏低・接近買點",
+      "entryReason": "距左側試單上緣 745.0 元僅差 1.5%（或等站回 5/10 日線 847.7 元右側轉強再接）。",
+      "note": "主機板與 AI PC 領導廠並擴展 AI 伺服器，跌破 800 元關卡後今明兩年本益比落於 10 倍以下。",
+      "chips": {
+        "tdccDate": "20261120",
+        "big1000Holders": 103,
+        "big1000Pct": 64.74,
+        "big1000Delta1w": null,
+        "big400Holders": 214,
+        "big400Pct": 74.44,
+        "big400Delta1w": -0.17,
+        "big400Delta4w": -0.38,
+        "retailHolders": 108208,
+        "retailHoldersDelta1w": null,
+        "retailPct": 10.05,
+        "totalHolders": 110603,
+        "totalHoldersDelta1w": null,
+        "broker": {
+          "mainBuyLots": 1907,
+          "mainSellLots": 1907,
+          "mainNetLots": 0,
+          "topBuyer": "元大證券",
+          "topBuyerLots": 319,
+          "topSeller": "台灣摩根士丹利",
+          "topSellerLots": 1062
+        },
+        "chipSignal": "neutral",
+        "chipLabel": "籌碼拉鋸換手"
+      }
+    },
+    {
+      "code": "2881",
+      "name": "富邦金",
+      "sector": "金融控股",
+      "category": "defense",
+      "close": 136.5,
+      "changePct": -7.77,
+      "ma5": 147.2,
+      "ma10": 152.25,
+      "ma20": 154.95,
+      "kd": {
+        "k": 31.98,
+        "d": 46.55,
+        "prev_k": 43.73,
+        "prev_d": 53.83
+      },
+      "pe2026E": 12.36,
+      "pe2027E": 13.34,
+      "div2027E": 5.6,
+      "yield2027E": 4.1,
+      "payoutPct": 50.8,
+      "low52": 83.5,
+      "high52": 164.5,
+      "dist52LowPct": 63.5,
+      "buyZoneLow": 122.0,
+      "buyZoneHigh": 132.0,
+      "rightConfirmPrice": 152.2,
+      "entryStatus": "wait",
+      "entryLabel": "補跌修正・暫觀望",
+      "entryReason": "單日補跌 -7.77% 且距 52 週低點仍遠，勿第一天急接，等止跌或靠攏 122.0~132.0 元。",
+      "note": "金控獲利王，2026 前 10 月純益 1,264.7 億元（EPS 8.75 元）；屬強勢補跌段，待止跌再分批布局。",
+      "chips": {
+        "tdccDate": "20261120",
+        "big1000Holders": 524,
+        "big1000Pct": 84.73,
+        "big1000Delta1w": null,
+        "big400Holders": 1034,
+        "big400Pct": 86.96,
+        "big400Delta1w": 0.01,
+        "big400Delta4w": 0.05,
+        "retailHolders": 342090,
+        "retailHoldersDelta1w": null,
+        "retailPct": 4.25,
+        "totalHolders": 379038,
+        "totalHoldersDelta1w": null,
+        "broker": {
+          "mainBuyLots": 10604,
+          "mainSellLots": 11013,
+          "mainNetLots": -409,
+          "topBuyer": "美商高盛",
+          "topBuyerLots": 1725,
+          "topSeller": "美林",
+          "topSellerLots": 2823
+        },
+        "chipSignal": "neutral",
+        "chipLabel": "籌碼拉鋸換手"
+      }
+    },
+    {
+      "code": "3231",
+      "name": "緯創",
+      "sector": "AI 伺服器代工",
+      "category": "attack",
+      "close": 147.0,
+      "changePct": -5.77,
+      "ma5": 156.2,
+      "ma10": 163.6,
+      "ma20": 172.28,
+      "kd": {
+        "k": 19.57,
+        "d": 29.44,
+        "prev_k": 26.57,
+        "prev_d": 34.37
+      },
+      "pe2026E": 7.75,
+      "pe2027E": 4.98,
+      "div2027E": 11.5,
+      "yield2027E": 7.82,
+      "payoutPct": 60.8,
+      "low52": 122.5,
+      "high52": 206.0,
+      "dist52LowPct": 20.0,
+      "buyZoneLow": 135.0,
+      "buyZoneHigh": 148.0,
+      "rightConfirmPrice": 163.6,
+      "entryStatus": "buy_left",
+      "entryLabel": "達左側首波試單價",
+      "entryReason": "進入合理買進區間（135.0~148.0 元），前瞻 PE 4.98 倍，適合小額分批建立第 1 批底倉。",
+      "note": "2026 Q3 單季營收破 1.14 兆、純益年增 148%，2027E 本益比僅約 5 倍，為低估值高成長代表。",
+      "chips": {
+        "tdccDate": "20261120",
+        "big1000Holders": 332,
+        "big1000Pct": 65.04,
+        "big1000Delta1w": null,
+        "big400Holders": 567,
+        "big400Pct": 69.22,
+        "big400Delta1w": -0.3,
+        "big400Delta4w": -1.3,
+        "retailHolders": 326606,
+        "retailHoldersDelta1w": null,
+        "retailPct": 15.01,
+        "totalHolders": 342430,
+        "totalHoldersDelta1w": null,
+        "broker": {
+          "mainBuyLots": 10400,
+          "mainSellLots": 9423,
+          "mainNetLots": 977,
+          "topBuyer": "美商高盛",
+          "topBuyerLots": 2230,
+          "topSeller": "台灣摩根士丹利",
+          "topSellerLots": 2840
+        },
+        "chipSignal": "neutral",
+        "chipLabel": "4週大戶減・主力轉買"
+      }
+    },
+    {
+      "code": "2382",
+      "name": "廣達",
+      "sector": "AI 伺服器代工",
+      "category": "attack",
+      "close": 252.0,
+      "changePct": -4.0,
+      "ma5": 261.3,
+      "ma10": 275.45,
+      "ma20": 294.62,
+      "kd": {
+        "k": 15.07,
+        "d": 18.49,
+        "prev_k": 18.62,
+        "prev_d": 20.2
+      },
+      "pe2026E": 9.53,
+      "pe2027E": 7.97,
+      "div2027E": 21.2,
+      "yield2027E": 8.41,
+      "payoutPct": 80.2,
+      "low52": 247.5,
+      "high52": 438.0,
+      "dist52LowPct": 1.8,
+      "buyZoneLow": 240.0,
+      "buyZoneHigh": 258.0,
+      "rightConfirmPrice": 275.4,
+      "entryStatus": "buy_left",
+      "entryLabel": "達左側首波試單價",
+      "entryReason": "逼近 52 週低點 247.5 元（僅差 1.8%），2027E PE 7.97 倍、殖利率 8.4%，可左側試單。",
+      "note": "AI 伺服器代工龍頭，Q3 營收年增翻倍；股價逼近 52 週低點 247.5 元支撐，前瞻殖利率逾 8.4%。",
+      "chips": {
+        "tdccDate": "20261120",
+        "big1000Holders": 287,
+        "big1000Pct": 81.06,
+        "big1000Delta1w": null,
+        "big400Holders": 503,
+        "big400Pct": 84.45,
+        "big400Delta1w": 0.05,
+        "big400Delta4w": -0.38,
+        "retailHolders": 277164,
+        "retailHoldersDelta1w": null,
+        "retailPct": 8.28,
+        "totalHolders": 285665,
+        "totalHoldersDelta1w": null,
+        "broker": {
+          "mainBuyLots": 5159,
+          "mainSellLots": 3708,
+          "mainNetLots": 1451,
+          "topBuyer": "元大證券",
+          "topBuyerLots": 1242,
+          "topSeller": "台灣摩根士丹利",
+          "topSellerLots": 1176
+        },
+        "chipSignal": "neutral",
+        "chipLabel": "4週大戶減・主力轉買"
+      }
+    },
+    {
+      "code": "2385",
+      "name": "群光",
+      "sector": "電子零組件",
+      "category": "defense",
+      "close": 84.9,
+      "changePct": -1.85,
+      "ma5": 87.4,
+      "ma10": 88.07,
+      "ma20": 92.79,
+      "kd": {
+        "k": 18.99,
+        "d": 22.95,
+        "prev_k": 23.8,
+        "prev_d": 24.92
+      },
+      "pe2026E": 10.67,
+      "pe2027E": 11.94,
+      "div2027E": 6.3,
+      "yield2027E": 7.42,
+      "payoutPct": 79.6,
+      "low52": 84.0,
+      "high52": 149.5,
+      "dist52LowPct": 1.1,
+      "buyZoneLow": 82.0,
+      "buyZoneHigh": 86.5,
+      "rightConfirmPrice": 88.1,
+      "entryStatus": "buy_left",
+      "entryLabel": "達左側首波試單價",
+      "entryReason": "逼近 52 週低點 84.0 元（僅差 1.1%），2027E PE 11.94 倍、殖利率 7.4%，可左側試單。",
+      "note": "受惠 AI PC 換機與高瓦數電源升級；大盤急殺時單日抗跌，距 52 週低點僅 1%，高配息保護強。",
+      "chips": {
+        "tdccDate": "20261120",
+        "big1000Holders": 99,
+        "big1000Pct": 68.43,
+        "big1000Delta1w": null,
+        "big400Holders": 165,
+        "big400Pct": 73.89,
+        "big400Delta1w": 0.11,
+        "big400Delta4w": -0.13,
+        "retailHolders": 47649,
+        "retailHoldersDelta1w": null,
+        "retailPct": 11.23,
+        "totalHolders": 50758,
+        "totalHoldersDelta1w": null,
+        "broker": {
+          "mainBuyLots": 2774,
+          "mainSellLots": 2666,
+          "mainNetLots": 108,
+          "topBuyer": "港商野村",
+          "topBuyerLots": 1500,
+          "topSeller": "台灣摩根士丹利",
+          "topSellerLots": 679
+        },
+        "chipSignal": "neutral",
+        "chipLabel": "籌碼拉鋸換手"
+      }
+    },
+    {
+      "code": "2882",
+      "name": "國泰金",
+      "sector": "金融控股",
+      "category": "defense",
+      "close": 96.9,
+      "changePct": -6.38,
+      "ma5": 106.28,
+      "ma10": 109.19,
+      "ma20": 111.27,
+      "kd": {
+        "k": 33.19,
+        "d": 49.73,
+        "prev_k": 46.28,
+        "prev_d": 58.01
+      },
+      "pe2026E": 10.74,
+      "pe2027E": 11.1,
+      "div2027E": 4.5,
+      "yield2027E": 4.64,
+      "payoutPct": 49.4,
+      "low52": 63.6,
+      "high52": 121.5,
+      "dist52LowPct": 52.4,
+      "buyZoneLow": 88.0,
+      "buyZoneHigh": 94.0,
+      "rightConfirmPrice": 109.2,
+      "entryStatus": "wait",
+      "entryLabel": "補跌修正・暫觀望",
+      "entryReason": "單日補跌 -6.38% 且距 52 週低點仍遠，勿第一天急接，等止跌或靠攏 88.0~94.0 元。",
+      "note": "2026 前 10 月累計獲利破 1,100 億元（EPS 7.56 元），銀行壽險雙引擎穩健；補跌後待止穩接回。",
+      "chips": {
+        "tdccDate": "20261120",
+        "big1000Holders": 685,
+        "big1000Pct": 83.74,
+        "big1000Delta1w": null,
+        "big400Holders": 1260,
+        "big400Pct": 86.16,
+        "big400Delta1w": 0.02,
+        "big400Delta4w": 0.13,
+        "retailHolders": 355135,
+        "retailHoldersDelta1w": null,
+        "retailPct": 4.59,
+        "totalHolders": 395142,
+        "totalHoldersDelta1w": null,
+        "broker": {
+          "mainBuyLots": 12309,
+          "mainSellLots": 13271,
+          "mainNetLots": -962,
+          "topBuyer": "元大證券",
+          "topBuyerLots": 3240,
+          "topSeller": "國泰證券",
+          "topSellerLots": 9806
+        },
+        "chipSignal": "neutral",
+        "chipLabel": "籌碼拉鋸換手"
+      }
+    },
+    {
+      "code": "6669",
+      "name": "緯穎",
+      "sector": "雲端資料中心",
+      "category": "attack",
+      "close": 1325.0,
+      "changePct": -6.03,
+      "ma5": 1435.0,
+      "ma10": 1538.5,
+      "ma20": 1670.0,
+      "kd": {
+        "k": 13.03,
+        "d": 18.51,
+        "prev_k": 15.57,
+        "prev_d": 21.25
+      },
+      "pe2026E": 9.76,
+      "pe2027E": 6.58,
+      "div2027E": 71.3,
+      "yield2027E": 5.38,
+      "payoutPct": 52.5,
+      "low52": 1103.0,
+      "high52": 2875.0,
+      "dist52LowPct": 20.1,
+      "buyZoneLow": 1180.0,
+      "buyZoneHigh": 1300.0,
+      "rightConfirmPrice": 1538.5,
+      "entryStatus": "wait",
+      "entryLabel": "補跌修正・暫觀望",
+      "entryReason": "單日補跌 -6.03% 且距 52 週低點仍遠，勿第一天急接，等止跌或靠攏 1180.0~1300.0 元。",
+      "note": "CSP 與自研 ASIC 伺服器純度極高，殺盤修正後 2027E 本益比降至 6.6 倍，股性活潑宜分批低接。",
+      "chips": {
+        "tdccDate": "20261120",
+        "big1000Holders": 58,
+        "big1000Pct": 63.76,
+        "big1000Delta1w": null,
+        "big400Holders": 152,
+        "big400Pct": 73.96,
+        "big400Delta1w": 0.18,
+        "big400Delta4w": 0.57,
+        "retailHolders": 223344,
+        "retailHoldersDelta1w": null,
+        "retailPct": 9.82,
+        "totalHolders": 225099,
+        "totalHoldersDelta1w": null,
+        "broker": {
+          "mainBuyLots": 1647,
+          "mainSellLots": 911,
+          "mainNetLots": 736,
+          "topBuyer": "美商高盛",
+          "topBuyerLots": 610,
+          "topSeller": "摩根大通",
+          "topSellerLots": 213
+        },
+        "chipSignal": "accumulating",
+        "chipLabel": "大戶吸籌／主力偏多"
+      }
+    },
+    {
+      "code": "3034",
+      "name": "聯詠",
+      "sector": "IC 設計",
+      "category": "defense",
+      "close": 416.5,
+      "changePct": -4.58,
+      "ma5": 443.6,
+      "ma10": 459.9,
+      "ma20": 510.73,
+      "kd": {
+        "k": 11.43,
+        "d": 13.51,
+        "prev_k": 13.74,
+        "prev_d": 14.55
+      },
+      "pe2026E": 12.91,
+      "pe2027E": 11.75,
+      "div2027E": 27.6,
+      "yield2027E": 6.63,
+      "payoutPct": 85.6,
+      "low52": 352.0,
+      "high52": 608.0,
+      "dist52LowPct": 18.3,
+      "buyZoneLow": 380.0,
+      "buyZoneHigh": 408.0,
+      "rightConfirmPrice": 459.9,
+      "entryStatus": "watch_near",
+      "entryLabel": "估值偏低・接近買點",
+      "entryReason": "距左側試單上緣 408.0 元僅差 2.1%（或等站回 5/10 日線 459.9 元右側轉強再接）。",
+      "note": "顯示驅動 IC 龍頭，Q3 營收年增 26%、毛利率守穩 40.89%，配息率達 85.6% 現金流穩定。",
+      "chips": {
+        "tdccDate": "20261120",
+        "big1000Holders": 103,
+        "big1000Pct": 59.67,
+        "big1000Delta1w": null,
+        "big400Holders": 228,
+        "big400Pct": 72.51,
+        "big400Delta1w": -0.32,
+        "big400Delta4w": -0.17,
+        "retailHolders": 82701,
+        "retailHoldersDelta1w": null,
+        "retailPct": 8.92,
+        "totalHolders": 84743,
+        "totalHoldersDelta1w": null,
+        "broker": {
+          "mainBuyLots": 1450,
+          "mainSellLots": 1394,
+          "mainNetLots": 56,
+          "topBuyer": "美林",
+          "topBuyerLots": 536,
+          "topSeller": "台灣摩根士丹利",
+          "topSellerLots": 709
+        },
+        "chipSignal": "neutral",
+        "chipLabel": "籌碼拉鋸換手"
+      }
+    },
+    {
+      "code": "2317",
+      "name": "鴻海",
+      "sector": "AI 伺服器／代工",
+      "category": "attack",
+      "close": 210.0,
+      "changePct": -4.76,
+      "ma5": 217.8,
+      "ma10": 229.25,
+      "ma20": 236.3,
+      "kd": {
+        "k": 20.88,
+        "d": 33.55,
+        "prev_k": 28.78,
+        "prev_d": 39.88
+      },
+      "pe2026E": 10.82,
+      "pe2027E": 8.4,
+      "div2027E": 10.3,
+      "yield2027E": 4.9,
+      "payoutPct": 52.9,
+      "low52": 187.5,
+      "high52": 314.0,
+      "dist52LowPct": 12.0,
+      "buyZoneLow": 192.0,
+      "buyZoneHigh": 206.0,
+      "rightConfirmPrice": 229.2,
+      "entryStatus": "watch_near",
+      "entryLabel": "估值偏低・接近買點",
+      "entryReason": "距左側試單上緣 206.0 元僅差 1.9%（或等站回 5/10 日線 229.2 元右側轉強再接）。",
+      "note": "2026 Q3 營收破 3 兆、純益 775.24 億元創高；掌握 AI 整機組裝高市占，靠近 200 元具下檔支撐。",
+      "chips": {
+        "tdccDate": "20261120",
+        "big1000Holders": 831,
+        "big1000Pct": 66.6,
+        "big1000Delta1w": null,
+        "big400Holders": 1455,
+        "big400Pct": 69.37,
+        "big400Delta1w": -0.14,
+        "big400Delta4w": 0.28,
+        "retailHolders": 1061031,
+        "retailHoldersDelta1w": null,
+        "retailPct": 13.13,
+        "totalHolders": 1139408,
+        "totalHoldersDelta1w": null,
+        "broker": {
+          "mainBuyLots": 12087,
+          "mainSellLots": 16898,
+          "mainNetLots": -4811,
+          "topBuyer": "元大證券",
+          "topBuyerLots": 2678,
+          "topSeller": "台灣摩根士丹利",
+          "topSellerLots": 10416
+        },
+        "chipSignal": "neutral",
+        "chipLabel": "4週增・短線主力調節"
+      }
+    },
+    {
+      "code": "2330",
+      "name": "台積電",
+      "sector": "晶圓代工龍頭",
+      "category": "attack",
+      "close": 2000.0,
+      "changePct": -4.76,
+      "ma5": 2132.0,
+      "ma10": 2226.5,
+      "ma20": 2276.0,
+      "kd": {
+        "k": 26.85,
+        "d": 42.75,
+        "prev_k": 36.74,
+        "prev_d": 50.7
+      },
+      "pe2026E": 18.31,
+      "pe2027E": 13.73,
+      "div2027E": 36.0,
+      "yield2027E": 1.8,
+      "payoutPct": 33.2,
+      "low52": 1375.0,
+      "high52": 2705.0,
+      "dist52LowPct": 45.5,
+      "buyZoneLow": 1880.0,
+      "buyZoneHigh": 2010.0,
+      "rightConfirmPrice": 2226.5,
+      "entryStatus": "buy_left",
+      "entryLabel": "達左側首波試單價",
+      "entryReason": "進入合理買進區間（1880.0~2010.0 元），前瞻 PE 13.73 倍，適合小額分批建立第 1 批底倉。",
+      "note": "先進製程與封裝絕對龍頭，前三季 EPS 78.75 元；回檔測試 2,000 元大關，2027E PE 13.7 倍 PEG < 1。",
+      "chips": {
+        "tdccDate": "20261120",
+        "big1000Holders": 1469,
+        "big1000Pct": 84.14,
+        "big1000Delta1w": null,
+        "big400Holders": 2609,
+        "big400Pct": 86.89,
+        "big400Delta1w": -0.08,
+        "big400Delta4w": -0.3,
+        "retailHolders": 3278245,
+        "retailHoldersDelta1w": null,
+        "retailPct": 6.34,
+        "totalHolders": 3329043,
+        "totalHoldersDelta1w": null,
+        "broker": {
+          "mainBuyLots": 19409,
+          "mainSellLots": 23749,
+          "mainNetLots": -4340,
+          "topBuyer": "臺銀",
+          "topBuyerLots": 6877,
+          "topSeller": "富邦證券",
+          "topSellerLots": 5143
+        },
+        "chipSignal": "dumping",
+        "chipLabel": "大戶倒貨／主力偏空"
+      }
+    },
+    {
+      "code": "5871",
+      "name": "中租-KY",
+      "sector": "租賃金融／綠能",
+      "category": "defense",
+      "close": 94.0,
+      "changePct": -5.53,
+      "ma5": 98.24,
+      "ma10": 100.87,
+      "ma20": 103.16,
+      "kd": {
+        "k": 17.27,
+        "d": 28.55,
+        "prev_k": 25.08,
+        "prev_d": 34.19
+      },
+      "pe2026E": 8.1,
+      "pe2027E": 7.83,
+      "div2027E": 6.0,
+      "yield2027E": 6.38,
+      "payoutPct": 51.6,
+      "low52": 93.8,
+      "high52": 122.1,
+      "dist52LowPct": 0.2,
+      "buyZoneLow": 88.0,
+      "buyZoneHigh": 95.0,
+      "rightConfirmPrice": 100.9,
+      "entryStatus": "buy_left",
+      "entryLabel": "達左側首波試單價",
+      "entryReason": "逼近 52 週低點 93.8 元（僅差 0.2%），2027E PE 7.83 倍、殖利率 6.4%，可左側試單。",
+      "note": "2026 前三季 EPS 8.73 元（年增 6%）、總資產破兆，惟合併延滯率仍處 5.2% 高檔磨底；本益比壓縮至約 8 倍、貼近 52 週低點 93.8 元，宜耐心小額分批。",
+      "chips": {
+        "tdccDate": "20261120",
+        "big1000Holders": 208,
+        "big1000Pct": 64.37,
+        "big1000Delta1w": null,
+        "big400Holders": 364,
+        "big400Pct": 69.95,
+        "big400Delta1w": -0.36,
+        "big400Delta4w": -0.18,
+        "retailHolders": 105555,
+        "retailHoldersDelta1w": null,
+        "retailPct": 10.31,
+        "totalHolders": 115679,
+        "totalHoldersDelta1w": null,
+        "broker": {
+          "mainBuyLots": 4800,
+          "mainSellLots": 9794,
+          "mainNetLots": -4994,
+          "topBuyer": "凱基-台北",
+          "topBuyerLots": 1003,
+          "topSeller": "國泰證券",
+          "topSellerLots": 3996
+        },
+        "chipSignal": "dumping",
+        "chipLabel": "大戶倒貨／主力偏空"
+      }
+    }
+  ],
+  "watchlistSummary": {
+    "total": 12,
+    "buyReady": 6,
+    "watchNear": 3,
+    "wait": 3
+  },
+  "sources": [
+    {
+      "title": "台灣證券交易所 TWSE (三大法人 / 融資融券 / 成交統計)",
+      "uri": "https://www.twse.com.tw/zh/trading/foreign/bfi82u.html"
+    },
+    {
+      "title": "台灣期交所 TAIFEX (三大法人期貨未平倉)",
+      "uri": "https://www.taifex.com.tw/cht/3/futContractsDate"
+    },
+    {
+      "title": "集保中心 TDCC 股權分散表",
+      "uri": "https://www.tdcc.com.tw/portal/zh/smWeb/qryStock"
+    },
+    {
+      "title": "RSI20 籌碼趨勢 & 富邦嘉實主力分點",
+      "uri": "https://rsi.pttstock.tw/"
+    }
+  ],
+  "errors": []
+}
+  </script>
+
+  <script>
+    const STORAGE_HISTORY_KEY = 'tw_whale_risk_history_v1';
+    const STORAGE_CAPITAL_KEY = 'tw_whale_capital_v1';
+    const STORAGE_GEMINI_KEY = 'tw_whale_gemini_api_key';
+
+    let currentMarketMeta = null;
+    let currentWatchlist = [];
+    let watchlistFilter = 'all';
+    let expandedStockCodes = {};
+    let lastComputedState = {
+      totalRisk: 50,
+      stageName: '',
+      stageColor: '#1E2022',
+      signalKey: 'left_trial',
+      signalVerb: '左側試單',
+      signalHeadline: '',
+      allocMin: 30,
+      allocMax: 50,
+      allocMid: 40
+    };
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getEmbeddedData() {
+      try {
+        const el = document.getElementById('embedded-market-data');
+        return el ? JSON.parse(el.textContent) : null;
+      } catch (e) {
+        console.error('解析內嵌數據失敗', e);
+        return null;
+      }
+    }
+
+    function toggleSettingsPanel() {
+      const panel = document.getElementById('settingsPanel');
+      panel.classList.toggle('hidden');
+      const savedKey = localStorage.getItem(STORAGE_GEMINI_KEY) || '';
+      document.getElementById('geminiApiKeyInput').value = savedKey;
+    }
+
+    function saveGeminiKey() {
+      const val = document.getElementById('geminiApiKeyInput').value.trim();
+      if (!val) {
+        showToast('請輸入有效的 Gemini API Key');
+        return;
+      }
+      localStorage.setItem(STORAGE_GEMINI_KEY, val);
+      showToast('已將 Gemini API Key 安全儲存於本機瀏覽器');
+      document.getElementById('settingsPanel').classList.add('hidden');
+    }
+
+    function clearGeminiKey() {
+      localStorage.removeItem(STORAGE_GEMINI_KEY);
+      document.getElementById('geminiApiKeyInput').value = '';
+      showToast('已清除本機儲存的 Gemini API Key');
+    }
+
+    /**
+     * 將市場數據套用到儀表板所有 UI 欄位並重算
+     */
+    function applyMarketDataToUI(data) {
+      if (!data) return;
+      currentMarketMeta = data;
+      if (Array.isArray(data.watchlist)) {
+        currentWatchlist = data.watchlist;
+      }
+
+      if (typeof data.futuresNet === 'number') {
+        document.getElementById('futuresNet').value = Math.max(-120000, Math.min(40000, data.futuresNet));
+      }
+      if (typeof data.spotNet5d === 'number') {
+        document.getElementById('spotNet5d').value = Math.max(-4500, Math.min(2500, data.spotNet5d));
+      }
+      if (typeof data.retailMtxRatio === 'number') {
+        document.getElementById('retailMtxRatio').value = Math.max(-40, Math.min(60, data.retailMtxRatio));
+      }
+      if (typeof data.marginMaintenanceRatio === 'number') {
+        document.getElementById('marginMaintenanceRatio').value = Math.max(120, Math.min(185, data.marginMaintenanceRatio));
+      }
+
+      if (data.tsmcStatus !== undefined) document.getElementById('tsmcStatus').value = String(data.tsmcStatus);
+      if (data.financeStatus !== undefined) document.getElementById('financeStatus').value = String(data.financeStatus);
+      if (data.marginStatus !== undefined) document.getElementById('marginStatus').value = String(data.marginStatus);
+      if (data.whaleTrend !== undefined) document.getElementById('whaleTrend').value = String(data.whaleTrend);
+      if (data.kdStatus !== undefined) document.getElementById('kdStatus').value = String(data.kdStatus);
+
+      document.getElementById('chkPanicVol').checked = Boolean(data.chkPanicVol);
+      document.getElementById('chkGovSupport').checked = Boolean(data.chkGovSupport);
+      document.getElementById('chkDryVol').checked = Boolean(data.chkDryVol);
+
+      // 更新頂部數據列資訊
+      document.getElementById('syncTimestamp').textContent = `基準：${data.dateLabel || '--'}`;
+      document.getElementById('liveMarketBrief').textContent = data.summary || '已完成市場籌碼同步。';
+
+      const m = data.metrics || {};
+      const twiiBadge = document.getElementById('twiiBadge');
+      if (m.twiiClose) {
+        const chgSign = m.twiiChange > 0 ? '+' : '';
+        twiiBadge.textContent = `加權 ${Number(m.twiiClose).toLocaleString()} (${chgSign}${m.twiiChange} / ${chgSign}${m.twiiChangePct}%)`;
+      }
+
+      if (m.tsmc && m.tsmc.close) {
+        document.getElementById('tsmcRefBadge').textContent = `收 ${m.tsmc.close}｜月線 ${m.tsmc.ma20}`;
+      }
+      if (m.finance && m.finance.close) {
+        document.getElementById('financeRefBadge').textContent = `收 ${m.finance.close}｜5日 ${m.finance.change_5d_pct > 0 ? '+' : ''}${m.finance.change_5d_pct}%`;
+      }
+      if (m.kd && m.kd.k !== undefined) {
+        document.getElementById('kdRefBadge').textContent = `日K ${m.kd.k.toFixed(1)} / D ${m.kd.d.toFixed(1)}`;
+      }
+      if (typeof data.marginChange1dBillion === 'number') {
+        const sign = data.marginChange1dBillion > 0 ? '+' : '';
+        document.getElementById('marginRefBadge').textContent = `(單日 ${sign}${data.marginChange1dBillion}億)`;
+      }
+      if (typeof data.retailMtxOnlyRatio === 'number') {
+        document.getElementById('retailMtxSubNote').textContent = `(純小台 ${data.retailMtxOnlyRatio > 0 ? '+' : ''}${data.retailMtxOnlyRatio}%)`;
+      }
+      const whaleRefEl = document.getElementById('whaleRefBadge');
+      if (whaleRefEl && m.whaleStats && m.whaleStats.totalTracked) {
+        whaleRefEl.textContent = `(${m.whaleStats.totalTracked}檔中 ${m.whaleStats.dumping4wCount}檔近4週減碼)`;
+      }
+
+      const sourcesEl = document.getElementById('syncSources');
+      if (Array.isArray(data.sources) && data.sources.length > 0) {
+        sourcesEl.innerHTML = '<span>資料來源：</span>' + data.sources
+          .slice(0, 4)
+          .map(s => `<a href="${escapeHtml(s.uri)}" target="_blank" rel="noopener noreferrer" class="underline hover:text-[#FAF7F2]">${escapeHtml(s.title)}</a>`)
+          .join(' · ');
+      }
+
+      updateDashboard();
+    }
+
+    /**
+     * 更新整體風險分數、診斷結果、警訊清單與資金試算
+     */
+    function updateDashboard() {
+      const futuresNet = parseInt(document.getElementById('futuresNet').value, 10);
+      const spotNet5d = parseInt(document.getElementById('spotNet5d').value, 10);
+      const retailMtx = parseFloat(document.getElementById('retailMtxRatio').value);
+      const marginMaint = parseFloat(document.getElementById('marginMaintenanceRatio').value);
+
+      const tsmcScore = parseInt(document.getElementById('tsmcStatus').value, 10);
+      const financeScore = parseInt(document.getElementById('financeStatus').value, 10);
+      const marginScore = parseInt(document.getElementById('marginStatus').value, 10);
+      const whaleScore = parseInt(document.getElementById('whaleTrend').value, 10);
+      const kdScore = parseInt(document.getElementById('kdStatus').value, 10);
+
+      const isPanicVol = document.getElementById('chkPanicVol').checked;
+      const isGovSupport = document.getElementById('chkGovSupport').checked;
+      const isDryVol = document.getElementById('chkDryVol').checked;
+
+      // 更新滑桿顯示字樣
+      document.getElementById('futuresNetVal').textContent = `${futuresNet > 0 ? '+' : ''}${futuresNet.toLocaleString()} 口`;
+      document.getElementById('spotNet5dVal').textContent = `${spotNet5d > 0 ? '+' : ''}${spotNet5d.toLocaleString()} 億元`;
+      document.getElementById('retailMtxVal').textContent = `${retailMtx > 0 ? '+' : ''}${retailMtx.toFixed(1)}%`;
+      document.getElementById('marginMaintVal').textContent = `${marginMaint.toFixed(1)}%`;
+
+      // 維度一：外資期現貨 (滿分 35)
+      let futuresRisk = 0;
+      if (futuresNet < 0) {
+        futuresRisk = Math.min(20, Math.round((Math.abs(futuresNet) / 100000) * 20));
+      }
+      let spotRisk = 0;
+      if (spotNet5d < 0) {
+        spotRisk = Math.min(15, Math.round((Math.abs(spotNet5d) / 3000) * 15));
+      }
+      const dim1Total = futuresRisk + spotRisk;
+
+      // 維度二：台積電與金融防線 (滿分 25)
+      const dim2Total = Math.min(25, tsmcScore + financeScore);
+
+      // 維度三：融資餘額 + 散戶小台比 + 融資維持率 + 千張大戶 (滿分 25)
+      let retailRisk = 0;
+      if (retailMtx > 25) retailRisk = 7;
+      else if (retailMtx >= 10) retailRisk = 5;
+      else if (retailMtx >= -5) retailRisk = 3;
+      else retailRisk = 0;
+
+      let maintRisk = 0;
+      if (marginMaint < 140) maintRisk = 6;
+      else if (marginMaint < 152) maintRisk = 5;
+      else if (marginMaint < 162) maintRisk = 3;
+      else maintRisk = 0;
+
+      const dim3Total = Math.min(25, marginScore + retailRisk + maintRisk + whaleScore);
+
+      // 維度四：KD 與盤面恐慌 (滿分 15)
+      const dim4Total = Math.min(15, kdScore + (isPanicVol ? 3 : 0));
+
+      const totalRisk = Math.min(100, dim1Total + dim2Total + dim3Total + dim4Total);
+
+      document.getElementById('dim1Score').textContent = `${dim1Total} / 35 分`;
+      document.getElementById('dim2Score').textContent = `${dim2Total} / 25 分`;
+      document.getElementById('dim3Score').textContent = `${dim3Total} / 25 分`;
+      document.getElementById('dim4Score').textContent = `${dim4Total} / 15 分`;
+
+      // 更新儀表弧線
+      document.getElementById('riskScoreText').textContent = totalRisk;
+      const maxDash = 251.2;
+      const gaugeArc = document.getElementById('gaugeArc');
+      gaugeArc.style.strokeDashoffset = maxDash - (totalRisk / 100) * maxDash;
+
+      // 產生核心觸發警訊
+      const signals = [];
+      if (futuresNet <= -40000) signals.push(`外資台指期淨空單達 ${Math.abs(futuresNet).toLocaleString()} 口，避險空單高水位`);
+      if (spotNet5d <= -1000) signals.push(`近 5 日外資現貨大幅賣超 ${Math.abs(spotNet5d).toLocaleString()} 億元`);
+      if (retailMtx >= 15) signals.push(`散戶小台/微台綜合多空比達 +${retailMtx.toFixed(1)}%，散戶仍偏多接刀尚未認輸`);
+      else if (retailMtx <= -10) signals.push(`散戶小台/微台綜合多空比降至 ${retailMtx.toFixed(1)}%，散戶轉空有利籌碼沉澱`);
+      if (marginMaint < 142) signals.push(`大盤推算融資維持率跌至 ${marginMaint.toFixed(1)}%，處於追繳強制平倉清洗帶`);
+      else if (marginMaint < 155) signals.push(`大盤推算融資維持率降至 ${marginMaint.toFixed(1)}%，接近警戒區域`);
+      if (tsmcScore === 14) signals.push('台積電跌破月／季線，權值護城河鬆動');
+      if (financeScore === 11) signals.push('金融類股同步補跌破支撐，代表資金系統性去槓桿');
+      if (marginScore === 6) signals.push('指數修正但融資逆勢增加，大戶籌碼流向散戶');
+      if (marginScore === 4) signals.push('融資出現單日暴減斷頭潮，盤面正在強迫清理浮額');
+      if (whaleScore === 6) signals.push('千張大戶持股連週下滑，大戶完成高檔減碼');
+      if (kdScore === 12) signals.push('日線 KD 處於低檔鈍化未黃金交叉，切勿單憑低檔摸底');
+      if (isPanicVol) signals.push('出現恐慌性爆量長黑或急殺跳空，處情緒踩踏階段');
+      if (isGovSupport || isDryVol) signals.push('已具備官股／內資穩盤或量縮不破底之築底觀察條件');
+
+      if (signals.length === 0) {
+        signals.push('外資期現貨、散戶多空比與權值結構平穩，暫無集體撤退警訊');
+      }
+      document.getElementById('triggeredSignals').innerHTML = signals.map(s => `<li>${escapeHtml(s)}</li>`).join('');
+
+      // 五階段判讀與建議持股區間
+      const resultCard = document.getElementById('resultCard');
+      const stageBadge = document.getElementById('stageBadge');
+      const diagnosisTitle = document.getElementById('diagnosisTitle');
+      const diagnosisSummary = document.getElementById('diagnosisSummary');
+      const actionAdvice = document.getElementById('actionAdvice');
+
+      let stageName = '';
+      let stageColor = '#1E2022';
+      let allocMin = 40;
+      let allocMax = 60;
+      let allocMid = 50;
+      let signalKey = 'left_trial';
+      let signalVerb = '左側試單';
+      let signalPillLabel = '右側/左側切換';
+      let signalBg = '#E0F2FE';
+      let signalBorder = '#0369A1';
+      let signalTextCol = '#0369A1';
+      let signalHeadline = '';
+      let signalSubReason = '';
+      let signalPace = '';
+
+      if (totalRisk <= 38 && (kdScore === 3 || whaleScore === 2 || isDryVol || retailMtx <= -10)) {
+        stageColor = '#15803D';
+        stageName = '階段五：籌碼沉澱／恢復買進訊號';
+        allocMin = 35; allocMax = 55; allocMid = 45;
+        signalKey = 'buy_right';
+        signalVerb = '積極買進';
+        signalPillLabel = '右側買點確立';
+        signalBg = '#DCFCE7';
+        signalBorder = '#15803D';
+        signalTextCol = '#15803D';
+        signalHeadline = '右側確認・分批積極買進（建議持股 35%～55%）';
+        signalSubReason = '融資已清洗且散戶偏空不敢進場，外資回補與日 KD 低檔翻揚，適合依名單買進強勢與低估值龍頭。';
+        signalPace = '積極分批買進';
+        stageBadge.className = 'mt-2.5 px-3 py-1 rounded text-xs font-semibold bg-[#DCFCE7] text-[#166534] border border-[#15803D]/30 text-center';
+        resultCard.style.borderLeftColor = stageColor;
+        diagnosisTitle.textContent = '轉機：外資空單回補、散戶停損翻空，可右側分批買進';
+        diagnosisSummary.textContent = '經歷前波融資斷頭清理與量縮築底後，外資期現貨賣壓減緩轉買、散戶不敢進場（小台偏空），權值核心站回短期均線且日 KD 低檔轉強，確認底部結構逐步成型。';
+        actionAdvice.textContent = '啟動「右側確認分批買進」紀律！建議先投入 35%～55% 資金配置市值型 ETF 與領先站回月線的績優權值股，待指數站穩月線後再加碼。';
+      } else if (totalRisk >= 72 && (isPanicVol || marginScore === 4 || marginMaint < 142) && (isGovSupport || isDryVol || marginMaint < 140)) {
+        stageColor = '#0369A1';
+        stageName = '階段四：踩踏宣洩／末跌段觀察期';
+        allocMin = 15; allocMax = 30; allocMid = 20;
+        signalKey = 'left_trial';
+        signalVerb = '左側試單';
+        signalPillLabel = '斷頭清洗尋底';
+        signalBg = '#E0F2FE';
+        signalBorder = '#0369A1';
+        signalTextCol = '#0369A1';
+        signalHeadline = '左側小額試單・嚴禁單日重壓（建議持股 15%～30%）';
+        const retailWarn = retailMtx > 10 ? `惟散戶小微台多空比仍高達 +${retailMtx.toFixed(1)}%，代表微台散戶尚未完全停損，仍須提防反覆震盪洗盤。` : '且散戶小台多空比已降溫，籌碼正在換手。';
+        signalSubReason = `維持率降至 ${marginMaint.toFixed(1)}% 且融資大減清洗中，僅限挑觀察名單中達價值買點個股「小額分 3~4 批試單」。`;
+        signalPace = '分 3~4 批小試';
+        stageBadge.className = 'mt-2.5 px-3 py-1 rounded text-xs font-semibold bg-[#E0F2FE] text-[#075985] border border-[#0369A1]/30 text-center';
+        resultCard.style.borderLeftColor = stageColor;
+        diagnosisTitle.textContent = '盤面處於「恐慌踩踏與斷頭清洗後的末跌尋底期」';
+        diagnosisSummary.textContent = `大戶已大幅撤離且市場正經歷融資斷頭與低維持率（${marginMaint.toFixed(1)}%）清洗，殺盤多屬被動強平宣洩。${retailWarn}`;
+        actionAdvice.textContent = '目前屬「左側分批試單觀察期」，切忌單筆重壓抄底。將資金分 3～4 批，等待「量縮不破前低」與「外資空單大幅回補／散戶多空比續降」再正式進場。';
+      } else if (totalRisk >= 70) {
+        stageColor = '#BE123C';
+        stageName = '階段三：大戶空手／主跌段高風險期';
+        allocMin = 0; allocMax = 10; allocMid = 5;
+        signalKey = 'cash_wait';
+        signalVerb = '空手觀望';
+        signalPillLabel = '主跌段高風險';
+        signalBg = '#FFE4E6';
+        signalBorder = '#BE123C';
+        signalTextCol = '#BE123C';
+        signalHeadline = '保留現金・嚴禁隨意接刀（建議持股 0%～10%）';
+        signalSubReason = '外資期現貨同步大幅偏空、權值防線失守且融資尚未清洗完畢，任何急彈皆應先以減碼保本為主。';
+        signalPace = '減碼／現金為王';
+        stageBadge.className = 'mt-2.5 px-3 py-1 rounded text-xs font-semibold bg-[#FFE4E6] text-[#9F1239] border border-[#BE123C]/30 text-center';
+        resultCard.style.borderLeftColor = stageColor;
+        diagnosisTitle.textContent = '警報：大戶高度撤退，盤面進入「主跌段」結構';
+        diagnosisSummary.textContent = '外資期現貨同步偏空、台積電與金融防線鬆動且散戶仍持續做多接刀，符合標準空頭主跌段特徵。未見融資大規模清洗與量縮止跌前，任何急彈皆易成逃命波。';
+        actionAdvice.textContent = '啟動最高防禦規格，持股水位建議壓低至 0%～10%（保留現金為王）。嚴禁因跌深或單靠指標背離而提前滿手接刀。';
+      } else if (totalRisk >= 42) {
+        stageColor = '#B45309';
+        stageName = '階段二：大戶逢高調節／撤退警戒期';
+        allocMin = 20; allocMax = 35; allocMid = 25;
+        signalKey = 'sell_trim';
+        signalVerb = '減碼賣出';
+        signalPillLabel = '大戶撤退前夕';
+        signalBg = '#FEF3C7';
+        signalBorder = '#B45309';
+        signalTextCol = '#B45309';
+        signalHeadline = '逢高分批減碼賣出・拉高現金（建議持股 20%～35%）';
+        signalSubReason = '外資避險空單拉高且散戶融資/小台多單增溫，屬大戶高檔換手風險期，應趁反彈先收回現金等待低估值買點。';
+        signalPace = '逢彈汰弱賣出';
+        stageBadge.className = 'mt-2.5 px-3 py-1 rounded text-xs font-semibold bg-[#FEF3C7] text-[#92400E] border border-[#B45309]/30 text-center';
+        resultCard.style.borderLeftColor = stageColor;
+        diagnosisTitle.textContent = '警戒：大戶正在高檔減碼，籌碼逐漸流向散戶';
+        diagnosisSummary.textContent = '加權指數可能仍處高檔震盪，但外資期貨避險空單已悄然拉高，且散戶融資與小台多單升溫，這是大戶趁市場樂觀「拉高出貨」的關鍵風險轉折窗口。';
+        actionAdvice.textContent = '主動汰弱留強！將高估值或跌破 10 日線的個股分批獲利了結，把持股降到 20%～35%，留住足夠現金等未來安全買點。';
+      } else {
+        stageColor = '#15803D';
+        stageName = '階段一：多頭穩健控盤期';
+        allocMin = 70; allocMax = 90; allocMid = 80;
+        signalKey = 'hold_buy';
+        signalVerb = '抱股買進';
+        signalPillLabel = '多頭穩健控盤';
+        signalBg = '#DCFCE7';
+        signalBorder = '#15803D';
+        signalTextCol = '#15803D';
+        signalHeadline = '偏多操作抱股續抱・拉回買進（建議持股 70%～90%）';
+        signalSubReason = '大戶期現貨結構安定、權值與金融防線穩健，遇短線震盪回測均線皆可視為偏多加碼機會。';
+        signalPace = '順勢偏多持股';
+        stageBadge.className = 'mt-2.5 px-3 py-1 rounded text-xs font-semibold bg-[#DCFCE7] text-[#166534] border border-[#15803D]/30 text-center';
+        resultCard.style.borderLeftColor = stageColor;
+        diagnosisTitle.textContent = '健康：大戶與權值核心掌握多頭主導權';
+        diagnosisSummary.textContent = '外資期現貨無異常撤退，權值股與金融防線結構完整，融資維持率充裕且散戶未過度槓桿追高，籌碼安定度佳。';
+        actionAdvice.textContent = '順勢偏多操作即可，建議維持 70%～90% 持股水位，沿 10 日線或月線採移動停利，無須過度預設立場。';
+      }
+
+      // 更新頂部巨型買賣決策指標語燈號
+      const banner = document.getElementById('actionSignalBanner');
+      const pillBox = document.getElementById('signalPillBox');
+      banner.style.borderLeftColor = signalBorder;
+      pillBox.style.backgroundColor = signalBg;
+      pillBox.style.borderColor = signalBorder;
+      document.getElementById('signalPillLabel').textContent = signalPillLabel;
+      document.getElementById('signalPillLabel').style.color = signalTextCol;
+      const verbEl = document.getElementById('signalVerbText');
+      verbEl.textContent = signalVerb;
+      verbEl.style.color = signalTextCol;
+      document.getElementById('signalHeadline').textContent = signalHeadline;
+      document.getElementById('signalSubReason').textContent = signalSubReason;
+      document.getElementById('signalPaceText').textContent = signalPace;
+
+      gaugeArc.style.stroke = stageColor;
+      stageBadge.textContent = stageName;
+
+      lastComputedState = {
+        totalRisk,
+        stageName,
+        stageColor,
+        signalKey,
+        signalVerb,
+        signalHeadline,
+        allocMin,
+        allocMax,
+        allocMid
+      };
+      calculatePositionAdvice();
+      renderWatchlist();
+      updateMascotAdvice();
+    }
+
+    /**
+     * 個人資金與加減碼試算器
+     */
+    function loadSavedCapital() {
+      try {
+        const raw = localStorage.getItem(STORAGE_CAPITAL_KEY);
+        if (raw) {
+          const obj = JSON.parse(raw);
+          if (obj.totalCapital) document.getElementById('totalCapitalInput').value = obj.totalCapital;
+          if (obj.currentHolding !== undefined) document.getElementById('currentHoldingInput').value = obj.currentHolding;
+        }
+      } catch (e) { /* 忽略損毀資料 */ }
+    }
+
+    function onCapitalChange() {
+      const totalCapital = parseFloat(document.getElementById('totalCapitalInput').value) || 0;
+      const currentHolding = parseFloat(document.getElementById('currentHoldingInput').value) || 0;
+      localStorage.setItem(STORAGE_CAPITAL_KEY, JSON.stringify({ totalCapital, currentHolding }));
+      calculatePositionAdvice();
+    }
+
+    function calculatePositionAdvice() {
+      const totalCapital = Math.max(1, parseFloat(document.getElementById('totalCapitalInput').value) || 100);
+      const currentHolding = Math.max(0, parseFloat(document.getElementById('currentHoldingInput').value) || 0);
+      const { allocMin, allocMax, allocMid } = lastComputedState;
+
+      const currRatio = (currentHolding / totalCapital) * 100;
+      const currCash = Math.max(0, totalCapital - currentHolding);
+      const targetMinAmt = (totalCapital * allocMin) / 100;
+      const targetMaxAmt = (totalCapital * allocMax) / 100;
+      const targetMidAmt = (totalCapital * allocMid) / 100;
+
+      document.getElementById('targetAllocationBadge').textContent = `建議 ${allocMin}% ~ ${allocMax}%`;
+      document.getElementById('currRatioText').textContent = `${currRatio.toFixed(0)}%`;
+      document.getElementById('currCashText').textContent = `${currCash.toFixed(0)} 萬`;
+      document.getElementById('targetAmountText').textContent = `${targetMinAmt.toFixed(0)}~${targetMaxAmt.toFixed(0)} 萬`;
+
+      const box = document.getElementById('positionActionBox');
+      const titleEl = document.getElementById('positionActionTitle');
+      const detailEl = document.getElementById('positionActionDetail');
+
+      if (currentHolding > targetMaxAmt + 0.5) {
+        const reduceToMax = currentHolding - targetMaxAmt;
+        const reduceToMid = currentHolding - targetMidAmt;
+        box.style.borderLeftColor = '#BE123C';
+        titleEl.textContent = `水位超標（高於上限 ${allocMax}%）：建議減碼降風險`;
+        titleEl.className = 'text-xs font-bold text-[#9F1239]';
+        detailEl.textContent = `您目前持股 ${currentHolding.toFixed(0)} 萬（${currRatio.toFixed(0)}%），高於當前建議上限 ${targetMaxAmt.toFixed(0)} 萬。建議至少逢彈減碼變現 ${reduceToMax.toFixed(1)}～${reduceToMid.toFixed(1)} 萬元，把現金水位充實至 ${(totalCapital - targetMidAmt).toFixed(0)} 萬元左右。`;
+      } else if (currentHolding < targetMinAmt - 0.5) {
+        const addToMin = targetMinAmt - currentHolding;
+        const addToMid = targetMidAmt - currentHolding;
+        box.style.borderLeftColor = '#15803D';
+        titleEl.textContent = `水位偏低（低於下限 ${allocMin}%）：可分批布局`;
+        titleEl.className = 'text-xs font-bold text-[#166534]';
+        detailEl.textContent = `目前僅持股 ${currentHolding.toFixed(0)} 萬（${currRatio.toFixed(0)}%），具備充裕現金銀彈。符合紀律可分批承接約 ${addToMin.toFixed(1)}～${addToMid.toFixed(1)} 萬元（切記分 2～3 批進場，勿單日梭哈）。`;
+      } else {
+        box.style.borderLeftColor = '#0369A1';
+        titleEl.textContent = `持股水位合宜（位於建議區間 ${allocMin}%~${allocMax}%）`;
+        titleEl.className = 'text-xs font-bold text-[#075985]';
+        detailEl.textContent = `目前持股 ${currentHolding.toFixed(0)} 萬與保留現金 ${currCash.toFixed(0)} 萬完全符合當前階段控管紀律，無須急於大幅調整，依盤勢觀察移動停利或停損即可。`;
+      }
+    }
+
+    /**
+     * 情境模擬按鈕
+     */
+    function applyPreset(type) {
+      if (type === 'current') {
+        const embedded = getEmbeddedData();
+        if (embedded) {
+          applyMarketDataToUI(embedded);
+          return;
+        }
+      } else if (type === 'bull') {
+        applyMarketDataToUI({
+          dateLabel: '模擬情境：多頭穩健控盤',
+          summary: '外資台指期空單低於 2 萬口，近 5 日現貨大買回補，台積電穩站月線，散戶不敢追高（小微台偏空），融資維持率 168% 以上安全健康。',
+          futuresNet: -12000, spotNet5d: 650, retailMtxRatio: -8.5, marginMaintenanceRatio: 168.5,
+          tsmcStatus: '0', financeStatus: '0', marginStatus: '1', whaleTrend: '0', kdStatus: '0',
+          chkPanicVol: false, chkGovSupport: false, chkDryVol: false
+        });
+      } else if (type === 'exit1015') {
+        applyMarketDataToUI({
+          dateLabel: '模擬情境：大戶高檔撤退前夕',
+          summary: '指數表面仍撐在高檔，但外資期貨空單暴增至 5.8 萬口，現貨近 5 日連續提款，散戶小台多單湧入 +24% 接刀，台積電高檔破 10 日線，KD 80 死叉。',
+          futuresNet: -58000, spotNet5d: -1800, retailMtxRatio: 24.0, marginMaintenanceRatio: 157.0,
+          tsmcStatus: '7', financeStatus: '5', marginStatus: '6', whaleTrend: '6', kdStatus: '8',
+          chkPanicVol: false, chkGovSupport: false, chkDryVol: false
+        });
+      } else if (type === 'recovery') {
+        applyMarketDataToUI({
+          dateLabel: '模擬情境：落底恢復買進訊號',
+          summary: '歷經前波融資斷頭清洗後，量縮不破前低且出現官股護盤，散戶認輸翻空（-18.5%），外資現貨轉買且台積電帶量站回 5/10 日線，日 KD 低檔金叉。',
+          futuresNet: -26000, spotNet5d: 450, retailMtxRatio: -18.5, marginMaintenanceRatio: 161.0,
+          tsmcStatus: '3', financeStatus: '0', marginStatus: '1', whaleTrend: '2', kdStatus: '3',
+          chkPanicVol: false, chkGovSupport: true, chkDryVol: true
+        });
+      }
+    }
+
+    /**
+     * 雙通道「一鍵同步最新市場數據」：優先呼叫本機 Python API，離線時可使用使用者填入的 Gemini Key
+     */
+    async function syncLiveMarketData() {
+      const btn = document.getElementById('syncBtn');
+      const btnText = document.getElementById('syncBtnText');
+      const syncIcon = document.getElementById('syncIcon');
+
+      btn.disabled = true;
+      btn.classList.add('opacity-75', 'cursor-not-allowed');
+      syncIcon.classList.add('animate-spin');
+      btnText.textContent = '正在同步最新官方籌碼...';
+
+      let synced = false;
+      let timedOut = false;
+
+      // 通道一：優先嘗試本機 Python API 伺服器
+      const apiEndpoints = window.location.protocol.startsWith('http')
+        ? ['/api/sync']
+        : ['http://127.0.0.1:8765/api/sync'];
+
+      for (const endpoint of apiEndpoints) {
+        let timer = null;
+        try {
+          const controller = new AbortController();
+          timer = setTimeout(() => controller.abort(), 65000);
+          const resp = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal
+          });
+          clearTimeout(timer);
+          if (resp.ok) {
+            const data = await resp.json();
+            applyMarketDataToUI(data);
+            updateConnBadge(true, false);
+            showToast(`已透過本機 Python 官方爬蟲同步（${data.dateLabel || '最新'}）`);
+            synced = true;
+            break;
+          }
+        } catch (err) {
+          if (timer) clearTimeout(timer);
+          if (err && err.name === 'AbortError') {
+            timedOut = true;
+          }
+          console.warn('本機 Python 伺服器未回應:', err);
+        }
+      }
+
+      // 通道二：若未啟動本機 Python，檢查使用者是否在設定中填有 Gemini API Key 作為備援
+      if (!synced) {
+        const userKey = (localStorage.getItem(STORAGE_GEMINI_KEY) || '').trim();
+        if (userKey) {
+          btnText.textContent = '改用 Gemini 聯網備援檢索...';
+          try {
+            const geminiData = await syncViaGeminiBackup(userKey);
+            if (geminiData) {
+              applyMarketDataToUI(geminiData);
+              showToast('已透過 Gemini AI 聯網備援同步最新市場數據！');
+              synced = true;
+            }
+          } catch (gErr) {
+            console.error('Gemini 備援同步失敗:', gErr);
+            showToast('Gemini 備援連線失敗，請檢查 API Key 或改開 start_dashboard.bat');
+          }
+        } else if (timedOut) {
+          showToast('同步逾時（超過 65 秒），官方資料源回應較慢，請稍後再試或查看終端機進度');
+        } else {
+          showToast('未偵測到本機 Python 伺服器：請雙擊 start_dashboard.bat，或於右上角「同步設定」填入 Gemini Key');
+        }
+      }
+
+      btn.disabled = false;
+      btn.classList.remove('opacity-75', 'cursor-not-allowed');
+      syncIcon.classList.remove('animate-spin');
+      btnText.textContent = '一鍵同步最新市場數據';
+    }
+
+    async function syncViaGeminiBackup(apiKey) {
+      const systemPrompt = `你是專業台股籌碼分析師。請使用 Google Search 查詢最新一個交易日的台灣加權指數收盤點位、外資台指期未平倉淨空單口數、外資近5日現貨累計買賣超（億元）、散戶小台多空比（%）、大盤融資維持率（%）、台積電收盤價與均線狀態、大盤融資餘額變化與日線KD狀態。
+請嚴格以純 JSON 回覆：
+{
+  "dateLabel": "2026/11/20 收盤",
+  "summary": "100字以內盤勢與籌碼摘要",
+  "futuresNet": 整數（-120000到40000）,
+  "spotNet5d": 整數（-4500到2500）,
+  "retailMtxRatio": 小數（-40到60，散戶小台多空比%）,
+  "marginMaintenanceRatio": 小數（120到185，大盤融資維持率%）,
+  "tsmcStatus": "0"|"3"|"7"|"14",
+  "financeStatus": "0"|"5"|"11",
+  "marginStatus": "1"|"6"|"4",
+  "whaleTrend": "0"|"2"|"4"|"6",
+  "kdStatus": "0"|"3"|"8"|"12",
+  "chkPanicVol": 布林值,
+  "chkGovSupport": 布林值,
+  "chkDryVol": 布林值
+}`;
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: '查詢最新交易日台股加權指數、外資期貨未平倉、近5日買賣超、小台散戶多空比、融資維持率與台積電均線' }] }],
+          tools: [{ google_search: {} }],
+          systemInstruction: { parts: [{ text: systemPrompt }] }
+        })
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      const candidate = result.candidates?.[0];
+      const rawText = candidate?.content?.parts?.[0]?.text || '';
+      const cleaned = rawText.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(cleaned);
+      const attributions = candidate?.groundingMetadata?.groundingAttributions || [];
+      parsed.sources = attributions
+        .map(a => ({ uri: a.web?.uri, title: a.web?.title }))
+        .filter(s => s.uri && s.title)
+        .slice(0, 3);
+      return parsed;
+    }
+
+    /**
+     * 本機歷史紀錄儲存、趨勢圖與 JSON 匯出入
+     */
+    function getHistoryList() {
+      try {
+        const raw = localStorage.getItem(STORAGE_HISTORY_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveHistoryList(list) {
+      localStorage.setItem(STORAGE_HISTORY_KEY, JSON.stringify(list));
+      renderHistory();
+    }
+
+    function saveCurrentSnapshot() {
+      const dateLabel = (currentMarketMeta?.dateLabel || new Date().toLocaleDateString('zh-TW')).trim();
+      const twiiClose = currentMarketMeta?.metrics?.twiiClose || '--';
+      const snapshot = {
+        id: dateLabel,
+        savedAt: new Date().toLocaleString('zh-TW', { hour12: false }),
+        dateLabel,
+        twiiClose,
+        totalRisk: lastComputedState.totalRisk,
+        stageName: lastComputedState.stageName,
+        stageColor: lastComputedState.stageColor,
+        futuresNet: parseInt(document.getElementById('futuresNet').value, 10),
+        spotNet5d: parseInt(document.getElementById('spotNet5d').value, 10),
+        retailMtxRatio: parseFloat(document.getElementById('retailMtxRatio').value),
+        marginMaintenanceRatio: parseFloat(document.getElementById('marginMaintenanceRatio').value),
+        tsmcStatus: document.getElementById('tsmcStatus').value,
+        financeStatus: document.getElementById('financeStatus').value,
+        marginStatus: document.getElementById('marginStatus').value,
+        whaleTrend: document.getElementById('whaleTrend').value,
+        kdStatus: document.getElementById('kdStatus').value,
+        chkPanicVol: document.getElementById('chkPanicVol').checked,
+        chkGovSupport: document.getElementById('chkGovSupport').checked,
+        chkDryVol: document.getElementById('chkDryVol').checked
+      };
+
+      const list = getHistoryList();
+      const idx = list.findIndex(item => item.id === snapshot.id);
+      if (idx >= 0) list[idx] = snapshot;
+      else list.unshift(snapshot);
+
+      saveHistoryList(list.slice(0, 60));
+      showToast(`已儲存「${dateLabel}」判讀快照至本機紀錄`);
+    }
+
+    function loadHistorySnapshot(index) {
+      const list = getHistoryList();
+      const item = list[index];
+      if (!item) return;
+      applyMarketDataToUI({
+        dateLabel: item.dateLabel,
+        summary: `已回載歷史存檔（儲存於 ${item.savedAt}）：加權指數 ${item.twiiClose}、外資期貨 ${item.futuresNet.toLocaleString()} 口、散戶多空比 ${item.retailMtxRatio}%。`,
+        futuresNet: item.futuresNet,
+        spotNet5d: item.spotNet5d,
+        retailMtxRatio: item.retailMtxRatio,
+        marginMaintenanceRatio: item.marginMaintenanceRatio,
+        tsmcStatus: item.tsmcStatus,
+        financeStatus: item.financeStatus,
+        marginStatus: item.marginStatus,
+        whaleTrend: item.whaleTrend,
+        kdStatus: item.kdStatus,
+        chkPanicVol: item.chkPanicVol,
+        chkGovSupport: item.chkGovSupport,
+        chkDryVol: item.chkDryVol,
+        metrics: { twiiClose: item.twiiClose, twiiChange: '', twiiChangePct: '' }
+      });
+      showToast(`已還原 ${item.dateLabel} 當時盤面數值`);
+    }
+
+    function deleteHistorySnapshot(index) {
+      const list = getHistoryList();
+      list.splice(index, 1);
+      saveHistoryList(list);
+      showToast('已刪除該筆歷史紀錄');
+    }
+
+    function clearAllHistory() {
+      if (getHistoryList().length === 0) return;
+      localStorage.removeItem(STORAGE_HISTORY_KEY);
+      renderHistory();
+      showToast('已清空本機歷史追蹤紀錄');
+    }
+
+    function exportHistoryJson() {
+      const list = getHistoryList();
+      if (list.length === 0) {
+        showToast('目前尚無歷史紀錄可匯出');
+        return;
+      }
+      const blob = new Blob([JSON.stringify(list, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `tw_whale_risk_history_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('已下載歷史紀錄 JSON 備份檔');
+    }
+
+    function importHistoryJson(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const parsed = JSON.parse(String(e.target?.result || '[]'));
+          if (!Array.isArray(parsed)) throw new Error('格式錯誤');
+          saveHistoryList(parsed.slice(0, 60));
+          showToast(`成功匯入 ${parsed.length} 筆歷史紀錄`);
+        } catch (err) {
+          showToast('匯入失敗：請確認為正確的紀錄備份 JSON 檔');
+        }
+        event.target.value = '';
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    function renderHistory() {
+      const list = getHistoryList();
+      const tbody = document.getElementById('historyTableBody');
+      const trendContainer = document.getElementById('historyTrendContainer');
+      const barsEl = document.getElementById('historyBars');
+
+      if (list.length === 0) {
+        trendContainer.classList.add('hidden');
+        tbody.innerHTML = '<tr><td colspan="8" class="py-4 text-center text-[#5C5F62]">尚無已儲存的歷史紀錄，點擊上方「+ 儲存今日判讀紀錄」即可開始追蹤。</td></tr>';
+        return;
+      }
+
+      // 渲染近 10 筆迷你長條趨勢圖（由舊到新排列）
+      trendContainer.classList.remove('hidden');
+      const recent10 = list.slice(0, 10).reverse();
+      barsEl.innerHTML = recent10.map(item => {
+        const hPct = Math.max(12, Math.min(100, item.totalRisk));
+        const shortDate = escapeHtml(item.dateLabel.replace(' 收盤', '').replace('2026/', ''));
+        return `
+          <div class="flex-1 flex flex-col items-center gap-1 min-w-[36px]">
+            <span class="text-[10px] font-bold text-[#1E2022]">${item.totalRisk}</span>
+            <div class="w-full max-w-[32px] bg-[#EAE4D7] rounded-t h-16 flex items-end overflow-hidden">
+              <div style="height: ${hPct}%; background-color: ${escapeHtml(item.stageColor || '#1E2022')}" class="w-full transition-all duration-300"></div>
+            </div>
+            <span class="text-[10px] text-[#5C5F62] truncate max-w-full">${shortDate}</span>
+          </div>
+        `;
+      }).join('');
+
+      tbody.innerHTML = list.map((item, idx) => `
+        <tr class="hover:bg-[#FAF7F2]">
+          <td class="py-2 px-3 font-medium">${escapeHtml(item.dateLabel)}</td>
+          <td class="py-2 px-3">${item.twiiClose ? Number(item.twiiClose).toLocaleString() : '--'}</td>
+          <td class="py-2 px-3">${item.futuresNet.toLocaleString()} 口</td>
+          <td class="py-2 px-3">${item.retailMtxRatio > 0 ? '+' : ''}${Number(item.retailMtxRatio).toFixed(1)}%</td>
+          <td class="py-2 px-3">${Number(item.marginMaintenanceRatio).toFixed(1)}%</td>
+          <td class="py-2 px-3 font-bold" style="color: ${escapeHtml(item.stageColor || '#1E2022')}">${item.totalRisk} 分</td>
+          <td class="py-2 px-3">${escapeHtml(item.stageName)}</td>
+          <td class="py-2 px-3 text-right space-x-2 whitespace-nowrap">
+            <button type="button" onclick="loadHistorySnapshot(${idx})" class="underline text-[#0369A1] hover:text-[#1E2022]">回載</button>
+            <button type="button" onclick="deleteHistorySnapshot(${idx})" class="underline text-[#BE123C] hover:text-[#1E2022]">刪除</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.remove('opacity-0');
+      setTimeout(() => toast.classList.add('opacity-0'), 3200);
+    }
+
+    function copyReport() {
+      const score = document.getElementById('riskScoreText').textContent;
+      const stage = document.getElementById('stageBadge').textContent;
+      const title = document.getElementById('diagnosisTitle').textContent;
+      const summary = document.getElementById('diagnosisSummary').textContent;
+      const advice = document.getElementById('actionAdvice').textContent;
+      const actionBox = document.getElementById('positionActionDetail').textContent;
+      const dateStr = document.getElementById('syncTimestamp').textContent;
+      const buyReadyNames = (currentWatchlist || [])
+        .filter(w => w.entryStatus === 'buy_left' || w.entryStatus === 'buy_right')
+        .map(w => `${w.code} ${w.name}(${w.close})`)
+        .join('、') || '無';
+
+      const textToCopy = `【台股大戶籌碼風險判讀】(${dateStr})\n行動指令：${lastComputedState.signalVerb}（${lastComputedState.signalHeadline}）\n風險指數：${score} / 100\n目前位階：${stage}\n盤勢分析：${summary}\n操作策略：${advice}\n資金配置試算：${actionBox}\n觀察名單達買點：${buyReadyNames}`;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToCopy)
+          .then(() => showToast('已將完整盤勢與部位建議複製到剪貼簿'))
+          .catch(() => fallbackCopy(textToCopy));
+      } else {
+        fallbackCopy(textToCopy);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast('已將完整盤勢與部位建議複製到剪貼簿');
+      } catch (err) {
+        showToast('複製失敗，請手動選取文字複製');
+      }
+      document.body.removeChild(textarea);
+    }
+
+    async function checkBackendHealth() {
+      const url = window.location.protocol.startsWith('http')
+        ? '/api/health'
+        : 'http://127.0.0.1:8765/api/health';
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 1500);
+        const resp = await fetch(url, { signal: controller.signal });
+        clearTimeout(timer);
+        if (!resp.ok) {
+          updateConnBadge(false, false);
+          return { ok: false, syncing: false, fetchedAt: null, lastError: null };
+        }
+        const info = await resp.json();
+        const syncing = Boolean(info.syncing);
+        updateConnBadge(true, syncing);
+        return {
+          ok: true,
+          syncing,
+          fetchedAt: info.fetchedAt || null,
+          lastError: info.lastError || null
+        };
+      } catch (e) {
+        updateConnBadge(false, false);
+        return { ok: false, syncing: false, fetchedAt: null, lastError: null };
+      }
+    }
+
+    function updateConnBadge(online, syncing = false) {
+      const badge = document.getElementById('connModeBadge');
+      if (online && syncing) {
+        badge.textContent = '背景同步最新盤後數據中...';
+        badge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded bg-[#FEF3C7] text-[#92400E] border border-[#D97706]/35';
+      } else if (online) {
+        badge.textContent = '本機 Python 官方爬蟲連線中';
+        badge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded bg-[#DCFCE7] text-[#166534] border border-[#15803D]/30';
+      } else {
+        badge.textContent = '單檔離線模式（可開 start_dashboard.bat 連網）';
+        badge.className = 'text-[11px] font-medium px-2 py-0.5 rounded bg-[#E5E0D5] text-[#45484B]';
+      }
+    }
+
+    /**
+     * 12 檔觀察名單渲染與大盤連動評估
+     */
+    function setWatchlistFilter(filterKey) {
+      watchlistFilter = filterKey;
+      document.querySelectorAll('.wl-filter-btn').forEach(btn => {
+        const key = btn.getAttribute('data-filter');
+        if (key === filterKey) {
+          btn.className = 'wl-filter-btn px-2.5 py-1.5 text-xs font-semibold rounded-md bg-[#1E2022] text-[#FAF7F2] border border-[#1E2022]';
+        } else if (key === 'buyReady') {
+          btn.className = 'wl-filter-btn px-2.5 py-1.5 text-xs font-medium rounded-md bg-[#FAF7F2] text-[#166534] border border-[#15803D]/35 hover:bg-[#DCFCE7]';
+        } else {
+          btn.className = 'wl-filter-btn px-2.5 py-1.5 text-xs font-medium rounded-md bg-[#FAF7F2] text-[#1E2022] border border-[#D5CFC2] hover:bg-[#EAE4D7]';
+        }
+      });
+      renderWatchlist();
+    }
+
+    function toggleWatchlistDetail(code) {
+      expandedStockCodes[code] = !expandedStockCodes[code];
+      renderWatchlist();
+    }
+
+    function renderWatchlist() {
+      const list = Array.isArray(currentWatchlist) ? currentWatchlist : [];
+      const tbody = document.getElementById('watchlistTableBody');
+      if (!tbody) return;
+
+      const buyReadyCount = list.filter(x => x.entryStatus === 'buy_left' || x.entryStatus === 'buy_right').length;
+      const nearCount = list.filter(x => x.entryStatus === 'watch_near').length;
+      const waitCount = list.filter(x => x.entryStatus === 'wait').length;
+      const attackCount = list.filter(x => x.category === 'attack').length;
+      const defenseCount = list.filter(x => x.category === 'defense').length;
+
+      document.getElementById('wlTitleCount').textContent = String(list.length || 12);
+      document.getElementById('wlCountAll').textContent = String(list.length || 12);
+      document.getElementById('wlCountAttack').textContent = String(attackCount);
+      document.getElementById('wlCountDefense').textContent = String(defenseCount);
+      document.getElementById('wlCountBuy').textContent = String(buyReadyCount);
+      document.getElementById('wlStatBuy').textContent = String(buyReadyCount);
+      document.getElementById('wlStatNear').textContent = String(nearCount);
+      document.getElementById('wlStatWait').textContent = String(waitCount);
+      document.getElementById('signalWatchlistCountText').textContent = `${buyReadyCount} / ${list.length || 12} 檔`;
+
+      // 大盤連動說明條
+      const macroBanner = document.getElementById('watchlistMacroBanner');
+      const macroText = document.getElementById('watchlistMacroText');
+      const { signalKey } = lastComputedState;
+      if (signalKey === 'buy_right' || signalKey === 'hold_buy') {
+        macroBanner.style.borderLeftColor = '#15803D';
+        macroText.innerHTML = `<strong class="text-[#166534]">大盤連動進場策略（允許積極買進）：</strong>目前大盤風險可控且轉強，名單內標示為「🟢 達買進價位」之個股可依總資金紀律進行分批建倉。`;
+      } else if (signalKey === 'left_trial') {
+        macroBanner.style.borderLeftColor = '#0369A1';
+        macroText.innerHTML = `<strong class="text-[#075985]">大盤連動進場策略（左側小額試單）：</strong>目前大盤處於斷頭清洗期末跌段，已達價位之個股僅建議投入「第 1 批試單部位（預留 2/3 資金等站回 5/10 日線再加碼）」。`;
+      } else if (signalKey === 'sell_trim') {
+        macroBanner.style.borderLeftColor = '#B45309';
+        macroText.innerHTML = `<strong class="text-[#92400E]">大盤連動進場策略（大戶撤退警戒）：</strong>大盤風險升溫中，對已達低檔區個股建議暫緩追買，保留現金等系統性賣壓宣洩。`;
+      } else {
+        macroBanner.style.borderLeftColor = '#BE123C';
+        macroText.innerHTML = `<strong class="text-[#9F1239]">大盤連動進場策略（主跌段空手觀望）：</strong>大盤處無護盤主跌段，雖有個股落入價值區，仍建議先看少做，等待出現斷頭減肥量縮訊號再分批試單。`;
+      }
+
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="py-5 text-center text-[#5C5F62]">尚無個股即時報價資料，請點擊上方「一鍵同步最新市場數據」更新觀察名單。</td></tr>';
+        return;
+      }
+
+      const filtered = list.filter(item => {
+        if (watchlistFilter === 'buyReady') return item.entryStatus === 'buy_left' || item.entryStatus === 'buy_right';
+        if (watchlistFilter === 'attack') return item.category === 'attack';
+        if (watchlistFilter === 'defense') return item.category === 'defense';
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="py-5 text-center text-[#5C5F62]">此篩選分類下目前無符合條件之個股。</td></tr>';
+        return;
+      }
+
+      const rowsHtml = filtered.map(item => {
+        const chgSign = item.changePct > 0 ? '+' : '';
+        const chgColor = item.changePct < 0 ? 'text-[#15803D]' : (item.changePct > 0 ? 'text-[#BE123C]' : 'text-[#5C5F62]');
+        const catBadge = item.category === 'attack'
+          ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-[#EAE4D7] text-[#1E2022]">⚡AI成長</span>'
+          : '<span class="text-[10px] px-1.5 py-0.5 rounded bg-[#E0F2FE] text-[#075985]">🛡️防禦高息</span>';
+
+        // 籌碼動向欄位運算 (集保 TDCC + RSI20 4週趨勢 + 富邦嘉實主力分點)
+        const chips = item.chips || {};
+        const broker = chips.broker || {};
+        let chipBadgeHtml = '<span class="text-[11px] text-[#5C5F62]">尚無籌碼數據</span>';
+        if (chips.chipSignal === 'dumping') {
+          chipBadgeHtml = `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#FFE4E6] text-[#9F1239] border border-[#BE123C]/30">🔴 ${escapeHtml(chips.chipLabel)}</span>`;
+        } else if (chips.chipSignal === 'accumulating') {
+          chipBadgeHtml = `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#DCFCE7] text-[#166534] border border-[#15803D]/30">🟢 ${escapeHtml(chips.chipLabel)}</span>`;
+        } else if (chips.chipLabel) {
+          chipBadgeHtml = `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#F3EFE6] text-[#45484B] border border-[#D5CFC2]">⚪ ${escapeHtml(chips.chipLabel)}</span>`;
+        }
+
+        const b1000Str = chips.big1000Pct != null ? `千張 ${Number(chips.big1000Pct).toFixed(1)}%` : '千張 --';
+        const d4Val = chips.big400Delta4w;
+        const d4Str = d4Val != null ? `4週 ${d4Val > 0 ? '+' : ''}${Number(d4Val).toFixed(2)}%` : '4週 --';
+        const d4Col = d4Val != null ? (d4Val > 0 ? 'text-[#BE123C]' : (d4Val < 0 ? 'text-[#15803D]' : 'text-[#5C5F62]')) : 'text-[#5C5F62]';
+        const mnVal = broker.mainNetLots;
+        const mnStr = mnVal != null ? `主力 ${mnVal > 0 ? '+' : ''}${mnVal.toLocaleString()}張` : '主力 --';
+        const mnCol = mnVal != null ? (mnVal > 0 ? 'text-[#BE123C]' : (mnVal < 0 ? 'text-[#15803D]' : 'text-[#5C5F62]')) : 'text-[#5C5F62]';
+
+        let statusBadgeHtml = '';
+        let macroActionNote = '';
+        if (item.entryStatus === 'buy_right') {
+          statusBadgeHtml = '<span class="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-[#DCFCE7] text-[#166534] border border-[#15803D]/30">🟢 右側買進確認</span>';
+          macroActionNote = signalKey === 'cash_wait' ? '個股強但大盤主跌，宜小部位測試' : '個股站回均線，可依紀律分批買進';
+        } else if (item.entryStatus === 'buy_left') {
+          statusBadgeHtml = '<span class="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-[#DCFCE7] text-[#166534] border border-[#15803D]/30">🟢 達左側首波試單價</span>';
+          macroActionNote = signalKey === 'cash_wait' ? '大盤無護盤，建議先列入首選追蹤' : '可啟動第 1 批（約 1/3 預算）小額低接';
+        } else if (item.entryStatus === 'watch_near') {
+          statusBadgeHtml = '<span class="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-[#FEF3C7] text-[#92400E] border border-[#B45309]/30">🟡 估值偏低・接近買點</span>';
+          macroActionNote = `等回落至 ${item.buyZoneHigh} 元或站回 ${item.rightConfirmPrice} 元`;
+        } else {
+          statusBadgeHtml = '<span class="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-[#FFE4E6] text-[#9F1239] border border-[#BE123C]/30">🔴 ' + escapeHtml(item.entryLabel) + '</span>';
+          macroActionNote = '補跌或未至買區，暫勿急於接刀';
+        }
+
+        const isExpanded = Boolean(expandedStockCodes[item.code]);
+        const d1Str = chips.big400Delta1w != null ? `${chips.big400Delta1w > 0 ? '+' : ''}${chips.big400Delta1w}%` : '--';
+        const retailDeltaStr = chips.retailHoldersDelta1w != null ? `（週 ${chips.retailHoldersDelta1w > 0 ? '+' : ''}${chips.retailHoldersDelta1w.toLocaleString()} 人）` : '';
+        const brokerDetailHtml = broker.mainNetLots != null
+          ? `前15大買超 ${broker.mainBuyLots?.toLocaleString()} / 賣超 ${broker.mainSellLots?.toLocaleString()}（<strong class="${mnCol}">淨 ${mnVal > 0 ? '+' : ''}${mnVal.toLocaleString()} 張</strong>）<br/>最大買超：<span class="font-medium">${escapeHtml(broker.topBuyer || '--')} (+${(broker.topBuyerLots || 0).toLocaleString()}張)</span> ｜ 最大賣超：<span class="font-medium">${escapeHtml(broker.topSeller || '--')} (-${(broker.topSellerLots || 0).toLocaleString()}張)</span>`
+          : '尚無券商主力分點資料';
+
+        const detailRow = isExpanded ? `
+          <tr class="bg-[#FAF7F2]">
+            <td colspan="8" class="px-4 py-3 border-t border-dashed border-[#D5CFC2]">
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                <div>
+                  <div class="text-[11px] font-semibold text-[#5C5F62]">核心基本面與未來性</div>
+                  <p class="text-[#1E2022] mt-1 leading-relaxed">${escapeHtml(item.note)}</p>
+                </div>
+                <div>
+                  <div class="text-[11px] font-semibold text-[#5C5F62]">技術均線與 KD（9,3,3）詳細數據</div>
+                  <p class="text-[#1E2022] mt-1 leading-relaxed">
+                    5日線 <span class="font-semibold">${item.ma5}</span> ／ 10日線 <span class="font-semibold">${item.ma10}</span> ／ 月線 <span class="font-semibold">${item.ma20}</span><br/>
+                    日線 K=${item.kd?.k ?? '--'} / D=${item.kd?.d ?? '--'} ｜ 52週區間 ${item.low52} ～ ${item.high52}
+                  </p>
+                </div>
+                <div>
+                  <div class="text-[11px] font-semibold text-[#5C5F62]">集保大戶與散戶人數（${escapeHtml(chips.tdccDate || '--')}）</div>
+                  <p class="text-[#1E2022] mt-1 leading-relaxed">
+                    千張大戶：<span class="font-semibold">${chips.big1000Pct ?? '--'}%</span>（${(chips.big1000Holders || 0).toLocaleString()} 人）<br/>
+                    400張以上：<span class="font-semibold">${chips.big400Pct ?? '--'}%</span>（週 ${d1Str} / 4週 ${d4Val != null ? (d4Val > 0 ? '+' : '') + d4Val + '%' : '--'}）<br/>
+                    10張以下散戶：${(chips.retailHolders || 0).toLocaleString()} 人${escapeHtml(retailDeltaStr)} ／ 總股東 ${(chips.totalHolders || 0).toLocaleString()} 人
+                  </p>
+                </div>
+                <div>
+                  <div class="text-[11px] font-semibold text-[#5C5F62]">前 15 大主力分點與買點解析</div>
+                  <p class="text-[#1E2022] mt-1 leading-relaxed">
+                    ${brokerDetailHtml}<br/>
+                    <span class="text-[#5C5F62]">買點判定：${escapeHtml(item.entryReason)}</span>
+                  </p>
+                </div>
+              </div>
+            </td>
+          </tr>
+        ` : '';
+
+        return `
+          <tr onclick="toggleWatchlistDetail('${escapeHtml(item.code)}')" class="hover:bg-[#FAF7F2] cursor-pointer transition-colors">
+            <td class="py-2.5 px-3 whitespace-nowrap">
+              <div class="flex items-center gap-1.5">
+                <span class="font-bold text-[#1E2022]">${escapeHtml(item.code)} ${escapeHtml(item.name)}</span>
+                ${catBadge}
+              </div>
+              <div class="text-[10px] text-[#5C5F62] mt-0.5">${escapeHtml(item.sector)}</div>
+            </td>
+            <td class="py-2.5 px-3 text-right whitespace-nowrap">
+              <div class="font-bold text-[#1E2022]">${Number(item.close).toLocaleString()} 元</div>
+              <div class="text-[11px] font-medium ${chgColor}">${chgSign}${Number(item.changePct).toFixed(2)}%</div>
+            </td>
+            <td class="py-2.5 px-3 whitespace-nowrap">
+              <div class="text-[#1E2022]">月線 ${item.ma20} ｜ K=${item.kd?.k?.toFixed(1) ?? '--'}</div>
+              <div class="text-[10px] text-[#5C5F62]">距 52W 低點 +${item.dist52LowPct}%</div>
+            </td>
+            <td class="py-2.5 px-3 text-right whitespace-nowrap">
+              <div class="text-[#5C5F62]">26E: ${item.pe2026E}x</div>
+              <div class="font-bold text-[#1E2022]">27E: ${item.pe2027E}x</div>
+            </td>
+            <td class="py-2.5 px-3 text-right whitespace-nowrap">
+              <div class="font-bold text-[#15803D]">${Number(item.yield2027E).toFixed(2)}%</div>
+              <div class="text-[10px] text-[#5C5F62]">估配 ${item.div2027E} 元</div>
+            </td>
+            <td class="py-2.5 px-3 whitespace-nowrap">
+              <div>${chipBadgeHtml}</div>
+              <div class="text-[10px] mt-0.5">
+                <span class="text-[#1E2022]">${b1000Str}</span> · <span class="font-medium ${d4Col}">${d4Str}</span> · <span class="font-semibold ${mnCol}">${mnStr}</span>
+              </div>
+            </td>
+            <td class="py-2.5 px-3 whitespace-nowrap">
+              <div class="text-[#1E2022] font-medium">左側：${item.buyZoneLow}～${item.buyZoneHigh}</div>
+              <div class="text-[10px] text-[#5C5F62]">右側站回：${item.rightConfirmPrice} 元</div>
+            </td>
+            <td class="py-2.5 px-3">
+              <div>${statusBadgeHtml}</div>
+              <div class="text-[10px] text-[#5C5F62] mt-0.5">${escapeHtml(macroActionNote)} ${isExpanded ? '▲' : '▼'}</div>
+            </td>
+          </tr>
+          ${detailRow}
+        `;
+      }).join('');
+
+      tbody.innerHTML = rowsHtml;
+    }
+
+    /**
+     * page-mascot (kamran) 原生互動引擎：九宮格視線追蹤、點擊眨眼/愛心/頭暈反應、彈性動畫與盤勢提醒泡泡
+     */
+    const MASCOT_DIRECTIONS = ['up-left','up','up-right','left','center','right','down-left','down','down-right'];
+    const MASCOT_REACTIONS = ['blink','heart','sparkle','surprised','wink','bashful','sleepy','dizzy','delighted'];
+    const MASCOT_CLOCKWISE = ['right','down-right','down','down-left','left','up-left','up','up-right'];
+    const MASCOT_PAYOFFS = ['heart','sparkle','delighted'];
+    const MASCOT_SECTOR = (Math.PI * 2) / MASCOT_CLOCKWISE.length;
+    const MASCOT_HYSTERESIS = 0.12;
+    const MASCOT_DEAD_ZONE = 70;
+    const MASCOT_SQUASH = [
+      { transform: 'scale(1, 1)', easing: 'ease-in' },
+      { transform: 'scale(1.10, 0.86)', offset: 0.18, easing: 'ease-out' },
+      { transform: 'scale(0.95, 1.08)', offset: 0.45, easing: 'ease-in-out' },
+      { transform: 'scale(1.03, 0.97)', offset: 0.72, easing: 'ease-in-out' },
+      { transform: 'scale(1, 1)' }
+    ];
+
+    let mascotTimers = [];
+    let mascotBoops = { count: 0, at: 0 };
+    let mascotTipIdx = 0;
+
+    function mascotCellPosition(index) {
+      const safeIdx = Math.max(0, index);
+      return `${(safeIdx % 3) * 50}% ${Math.floor(safeIdx / 3) * 50}%`;
+    }
+
+    function setMascotDirection(dir) {
+      const el = document.getElementById('mascotDirLayer');
+      if (el) el.style.backgroundPosition = mascotCellPosition(MASCOT_DIRECTIONS.indexOf(dir));
+    }
+
+    function setMascotReaction(react) {
+      const dirEl = document.getElementById('mascotDirLayer');
+      const reactEl = document.getElementById('mascotReactLayer');
+      if (!dirEl || !reactEl) return;
+      if (!react) {
+        dirEl.style.opacity = '1';
+        reactEl.style.opacity = '0';
+      } else {
+        reactEl.style.backgroundPosition = mascotCellPosition(MASCOT_REACTIONS.indexOf(react));
+        dirEl.style.opacity = '0';
+        reactEl.style.opacity = '1';
+      }
+    }
+
+    function initPageMascot() {
+      if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+      let sector = -1;
+      let pointer = null;
+
+      const aim = () => {
+        const btn = document.getElementById('pageMascotBtn');
+        if (!btn || !pointer) return;
+        const box = btn.getBoundingClientRect();
+        const dx = pointer.x - (box.left + box.width / 2);
+        const dy = pointer.y - (box.top + box.height / 2);
+        if (Math.hypot(dx, dy) < MASCOT_DEAD_ZONE) {
+          sector = -1;
+          setMascotDirection('center');
+          return;
+        }
+        const angle = Math.atan2(dy, dx);
+        const diff = angle - sector * MASCOT_SECTOR;
+        const wrapped = Math.atan2(Math.sin(diff), Math.cos(diff));
+        if (sector !== -1 && Math.abs(wrapped) < MASCOT_SECTOR / 2 + MASCOT_HYSTERESIS) {
+          return;
+        }
+        sector = (Math.round(angle / MASCOT_SECTOR) + MASCOT_CLOCKWISE.length) % MASCOT_CLOCKWISE.length;
+        setMascotDirection(MASCOT_CLOCKWISE[sector]);
+      };
+
+      window.addEventListener('pointermove', (e) => {
+        pointer = { x: e.clientX, y: e.clientY };
+        aim();
+      }, { passive: true });
+      window.addEventListener('scroll', aim, { passive: true });
+    }
+
+    function boopMascot() {
+      mascotTimers.forEach(clearTimeout);
+      mascotTimers = [];
+
+      const later = (ms, next) => {
+        mascotTimers.push(setTimeout(() => setMascotReaction(next), ms));
+      };
+
+      const now = Date.now();
+      mascotBoops.count = now - mascotBoops.at < 1600 ? mascotBoops.count + 1 : 1;
+      mascotBoops.at = now;
+
+      if (mascotBoops.count >= 4) {
+        mascotBoops.count = 0;
+        setMascotReaction('dizzy');
+        later(1100, null);
+      } else {
+        setMascotReaction('blink');
+        later(120, MASCOT_PAYOFFS[(mascotBoops.count - 1) % MASCOT_PAYOFFS.length]);
+        later(560, null);
+      }
+
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const squashEl = document.getElementById('mascotSquashLayer');
+        if (squashEl && squashEl.animate) {
+          squashEl.animate(MASCOT_SQUASH, { duration: 420, easing: 'linear' });
+        }
+      }
+
+      mascotTipIdx += 1;
+      updateMascotAdvice(true);
+    }
+
+    function toggleMascotBubble(show) {
+      const bubble = document.getElementById('mascotBubble');
+      const reopen = document.getElementById('mascotBubbleReopenBtn');
+      if (!bubble || !reopen) return;
+      if (show) {
+        bubble.classList.remove('hidden');
+        reopen.classList.add('hidden');
+      } else {
+        bubble.classList.add('hidden');
+        reopen.classList.remove('hidden');
+      }
+    }
+
+    function updateMascotAdvice(fromClick = false) {
+      const el = document.getElementById('mascotBubbleText');
+      if (!el) return;
+      const { signalKey, signalVerb, totalRisk } = lastComputedState;
+      const buyNames = (currentWatchlist || [])
+        .filter(w => w.entryStatus === 'buy_left' || w.entryStatus === 'buy_right')
+        .map(w => w.name);
+
+      const poolBySignal = {
+        left_trial: [
+          `目前指令是【${signalVerb}】！觀察名單已有 ${buyNames.slice(0, 3).join('、') || '多檔'} 進入價值區，記得先買第 1 批試單就好，別一次梭哈喔！`,
+          `融資維持率掉到斷頭帶了，清洗浮額需要時間。預留 2/3 現金等站回 5 日線再加碼最穩健！`,
+          `風險指數 ${totalRisk} 分，記住大戶原則：跌時挑低 PE 好公司分批接，不碰融資槓桿。`
+        ],
+        cash_wait: [
+          `警報！現在是【${signalVerb}】（風險 ${totalRisk} 分），未見量縮止跌或護盤前先抱緊現金，看戲比接刀舒服！`,
+          `大戶空手期千萬別手癢，先把觀察名單放進口袋，等融資大減後再出手！`
+        ],
+        sell_trim: [
+          `注意！【${signalVerb}】警示亮起，趁指數高檔震盪把漲多或破 10 日線持股獲利了結，現金留起來等便宜價。`,
+          `外資避險空單拉高、散戶卻還在加碼，正是大戶偷偷交棒的時候喔！`
+        ],
+        buy_right: [
+          `好消息！【${signalVerb}】確立！外資空單回補、散戶也認輸了，名單達買點股可以分批建倉囉！`,
+          `右側確認買點出現，優先看台積電與 2027E 低本益比 AI 領頭羊。`
+        ],
+        hold_buy: [
+          `盤面結構健康（風險僅 ${totalRisk} 分），【${signalVerb}】持續抱緊好公司，沿 10 日線移動停利即可！`,
+          `大戶控盤中，拉回不破月線都是觀察名單找買點的機會。`
+        ]
+      };
+
+      const lines = poolBySignal[signalKey] || [`目前指令：${signalVerb}（風險 ${totalRisk} 分）`];
+      if (fromClick && mascotBoops.count === 0) {
+        el.textContent = '哇！點太快頭好暈～看盤也要保持冷靜，別急著滿倉操作喔！';
+      } else {
+        el.textContent = lines[mascotTipIdx % lines.length];
+      }
+    }
+
+    async function pollBackgroundSync(initialFetchedAt) {
+      for (let i = 0; i < 45; i++) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        const h = await checkBackendHealth();
+        if (!h.ok) return;
+        if (h.syncing) continue;
+
+        updateConnBadge(true, false);
+        if (h.lastError) {
+          showToast('背景同步官方數據異常，暫沿用既有快取');
+          return;
+        }
+        if (h.fetchedAt && h.fetchedAt !== initialFetchedAt) {
+          try {
+            const resp = await fetch('/api/latest');
+            if (resp.ok) {
+              const fresh = await resp.json();
+              applyMarketDataToUI(fresh);
+              showToast(`背景已自動更新最新官方數據（${fresh.dateLabel || '最新'}）`);
+            }
+          } catch (e) { /* 保留既有畫面 */ }
+        }
+        return;
+      }
+    }
+
+    window.onload = async function () {
+      loadSavedCapital();
+      renderHistory();
+      initPageMascot();
+      applyPreset('current');
+
+      const health = await checkBackendHealth();
+      if (health.ok && window.location.protocol.startsWith('http')) {
+        let loadedFetchedAt = null;
+        try {
+          const resp = await fetch('/api/latest');
+          if (resp.ok) {
+            const latest = await resp.json();
+            loadedFetchedAt = latest.fetchedAt || null;
+            applyMarketDataToUI(latest);
+          }
+        } catch (e) { /* 保留內嵌資料 */ }
+
+        if (health.syncing) {
+          pollBackgroundSync(loadedFetchedAt);
+        }
+      }
+    };
+  </script>
+</body>
+</html>

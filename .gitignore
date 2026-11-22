@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+.env
+.env.*
+!.env.example
+data/*.tmp
+*.lnk
+docs/台股低本益比與成長潛力觀察名單.pdf

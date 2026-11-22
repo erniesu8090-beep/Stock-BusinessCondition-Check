@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>台股大戶撤退與籌碼風險判讀儀表板 — 操作手冊</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 14mm 14mm 14mm 14mm;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #FAF7F2;
+      color: #1E2022;
+      font-family: "Microsoft JhengHei", "Noto Sans TC", "PingFang TC", sans-serif;
+      font-size: 13px;
+      line-height: 1.62;
+    }
+    .page {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 16px 8px;
+    }
+    .hero {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background-color: #1E2022;
+      color: #FAF7F2;
+      padding: 18px 22px;
+      border-radius: 8px;
+      border: 1px solid #35383B;
+      margin-bottom: 16px;
+    }
+    .hero img {
+      width: 64px;
+      height: 64px;
+      border-radius: 10px;
+      border: 1px solid #4B5055;
+      flex-shrink: 0;
+      background-color: #1E2022;
+    }
+    .hero h1 {
+      margin: 0 0 4px 0;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .hero p {
+      margin: 0;
+      font-size: 12px;
+      color: #D8D2C7;
+    }
+    .section {
+      background-color: #FFFFFF;
+      border: 1px solid #E5E0D5;
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+      break-inside: avoid;
+    }
+    .section h2 {
+      margin: 0 0 10px 0;
+      font-size: 15px;
+      font-weight: 700;
+      color: #1E2022;
+      padding-left: 10px;
+      border-left: 4px solid #D97706;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .card {
+      background-color: #FAF7F2;
+      border: 1px solid #E5E0D5;
+      border-radius: 5px;
+      padding: 10px 12px;
+    }
+    .card-title {
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 4px;
+      color: #1E2022;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 4px;
+      margin-right: 4px;
+    }
+    .b-green { background-color: #DCFCE7; color: #166534; border: 1px solid #86EFAC; }
+    .b-amber { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+    .b-red   { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
+    .b-slate { background-color: #E5E0D5; color: #1E2022; border: 1px solid #D5CFC2; }
+    ul, ol {
+      margin: 4px 0 0 0;
+      padding-left: 18px;
+    }
+    li { margin-bottom: 4px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 6px;
+    }
+    th, td {
+      border: 1px solid #E5E0D5;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background-color: #F3EFE6;
+      font-weight: 700;
+      color: #1E2022;
+    }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      background-color: #F3EFE6;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 11.5px;
+    }
+    .footer {
+      text-align: center;
+      font-size: 11px;
+      color: #5C5F62;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="hero">
+      <img src="../assets/app_icon.png" alt="App Logo" />
+      <div>
+        <h1>台股大戶撤退與籌碼風險判讀儀表板 — 操作手冊</h1>
+        <p>整合台灣證交所、期交所、集保中心 TDCC 與券商主力分點，提供量化風險評分、部位控管與 12 檔低估值個股買點評估</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>一、快速啟動與雙模式使用說明</h2>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span class="badge b-green">推薦</span> 模式 1：雙擊捷徑一鍵連線看盤</div>
+          <ol>
+            <li>雙擊根目錄的 <code>台股籌碼儀表板.lnk</code>（或 <code>start_dashboard.bat</code>）。</li>
+            <li>初次使用會自動建置獨立 Python 虛擬環境並安裝 <code>requests</code>。</li>
+            <li>伺服器會在 <strong>1 秒內</strong>開啟瀏覽器（<code>http://127.0.0.1:8765</code>）先顯示快取數據，並於背景自動同步最新官方盤後資料（約 3～5 秒；若逢週五晚間首次抓集保週檔約 20～35 秒），完成後畫面自動刷新。</li>
+            <li>保持黑色命令列視窗開啟，即可隨時點擊頁面右上角「一鍵同步最新市場數據」。</li>
+          </ol>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="badge b-slate">免伺服器</span> 模式 2：單檔離線模式</div>
+          <ol>
+            <li>直接雙擊 <code>src/code_artifact.html</code> 即可在任何瀏覽器離線開啟。</li>
+            <li>每次透過 Python 同步完成後，最新盤後數據都會自動回寫內嵌至該 HTML 檔中。</li>
+            <li>離線模式仍可自由微調各指標滑桿、試算加減碼金額、存取歷史紀錄；亦可點右上角「同步設定」填入個人 Gemini API Key 作為聯網備援同步。</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>二、四大核心維度與頂部「一言買賣決策大燈號」</h2>
+      <p style="margin: 0 0 6px 0;">儀表板將盤後籌碼與技術結構量化為 <strong>0～100 分風險指數</strong>，並於最上方給出直白買賣建議：</p>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 24%;">風險維度</th>
+            <th style="width: 36%;">官方資料來源</th>
+            <th style="width: 40%;">關鍵觀察指標與判讀意義</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>維度一：期現貨籌碼</strong></td>
+            <td>台灣期交所 <code>futContractsDateDown</code><br />台灣證交所 <code>BFI82U</code></td>
+            <td>外資台指期未平倉淨口數、近 5 日外資與投信現貨買賣超合計，判別大資金方向。</td>
+          </tr>
+          <tr>
+            <td><strong>維度二：散戶與融資</strong></td>
+            <td>期交所 <code>DailyMarketReportFut</code><br />證交所 <code>MI_MARGN</code></td>
+            <td>小台＋微台（1/5 權重折算）綜合散戶多空比；融資單日／5 日增減與近 40 日成本推算整戶維持率（警戒線 130%）。</td>
+          </tr>
+          <tr>
+            <td><strong>維度三：大戶與權值防線</strong></td>
+            <td>Yahoo Finance 日線 K<br />集保 TDCC + RSI20 + 富邦分點</td>
+            <td>台積電（2330）與金融指數（^TFNI）均線位階；統計 12 檔觀察股 4 週 400 張大戶增減家數。</td>
+          </tr>
+          <tr>
+            <td><strong>維度四：技術超跌與量能</strong></td>
+            <td>Yahoo Finance + 證交所 <code>FMTQIK</code></td>
+            <td>大盤日線 KD(9,3,3) 位階、成交金額對 20 日均量比（辨識爆量恐慌殺盤 vs 量縮窒息止穩）。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>三、12 檔觀察名單與個股籌碼三件套</h2>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">進場評估燈號邏輯</div>
+          <ul>
+            <li><span class="badge b-green">右側買進確認</span> 股價站上 5 日與 10 日均線，日 KD 偏多且 2027E 本益比具吸引力。</li>
+            <li><span class="badge b-green">達左側首波試單價</span> 進入合理價值買進區間或逼近 52 週低點 7.5% 以內，適合小額分批建立底倉。</li>
+            <li><span class="badge b-amber">估值偏低・接近買點</span> 距左側試單上緣在 6.5% 以內，可列入優先盯盤。</li>
+            <li><span class="badge b-red">補跌修正・暫觀望</span> 單日急跌逾 5.8% 且距 52 週低點仍遠，避免第一天急接。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">大戶與主力籌碼三件套</div>
+          <ul>
+            <li><strong>集保中心 TDCC（每週五更新）</strong>：追蹤千張大戶、400 張大戶持股比例，以及 10 張以下散戶人數週增減（本機自動保存近 52 週快照於 <code>data/tdcc_weekly_history.json</code>）。</li>
+            <li><strong>近 4 週大戶趨勢</strong>：整合近 20 週 400 張大戶持股序列，快速辨識連續吸籌或撤退。</li>
+            <li><strong>前 15 大主力與分點</strong>：顯示當日前 15 大主力淨買賣超張數，以及最大買超／賣超券商分點名稱。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>四、個人資金試算、歷史紀錄與常見問題</h2>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">資金試算器與歷史追蹤</div>
+          <ul>
+            <li>輸入總投資資金、目標持股與現金比例，系統依據風險分數自動建議本次應加碼或減碼金額。</li>
+            <li>點擊「儲存今日判讀快照」可將數值存於瀏覽器 <code>localStorage</code>，支援繪製歷史風險趨勢長條圖與 JSON 匯出／匯入備份。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">常見問題排除</div>
+          <ul>
+            <li><strong>網頁顯示「單檔離線模式」</strong>：代表未開啟本機 Python 伺服器，請雙擊 <code>台股籌碼儀表板.lnk</code> 即可連線自動同步。</li>
+            <li><strong>週五晚間同步較久</strong>：集保 TDCC 原始檔約 2.4 MB，每週首次換週下載需 20～35 秒（超過 45 秒會自動回退舊快取），平日有快取僅需 3～5 秒。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      台股大戶撤退與籌碼風險判讀儀表板｜專案文件位於 <code>docs/</code>｜數據僅供客觀量化參考，投資決策請審慎評估風險
+    </div>
+  </div>
+</body>
+</html>

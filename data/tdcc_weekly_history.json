@@ -1,0 +1,136 @@
+{
+  "20261120": {
+    "2317": {
+      "date": "20261120",
+      "big1000Holders": 831,
+      "big1000Pct": 66.6,
+      "big400Holders": 1455,
+      "big400Pct": 69.37,
+      "retailHolders": 1061031,
+      "retailPct": 13.13,
+      "totalHolders": 1139408,
+      "totalShares": 14075746497
+    },
+    "2330": {
+      "date": "20261120",
+      "big1000Holders": 1469,
+      "big1000Pct": 84.14,
+      "big400Holders": 2609,
+      "big400Pct": 86.89,
+      "retailHolders": 3278245,
+      "retailPct": 6.34,
+      "totalHolders": 3329043,
+      "totalShares": 25932370067
+    },
+    "2357": {
+      "date": "20261120",
+      "big1000Holders": 103,
+      "big1000Pct": 64.74,
+      "big400Holders": 214,
+      "big400Pct": 74.44,
+      "retailHolders": 108208,
+      "retailPct": 10.05,
+      "totalHolders": 110603,
+      "totalShares": 742760280
+    },
+    "2376": {
+      "date": "20261120",
+      "big1000Holders": 89,
+      "big1000Pct": 65.14,
+      "big400Holders": 163,
+      "big400Pct": 71.79,
+      "retailHolders": 95883,
+      "retailPct": 14.14,
+      "totalHolders": 98573,
+      "totalShares": 719888886
+    },
+    "2382": {
+      "date": "20261120",
+      "big1000Holders": 287,
+      "big1000Pct": 81.06,
+      "big400Holders": 503,
+      "big400Pct": 84.45,
+      "retailHolders": 277164,
+      "retailPct": 8.28,
+      "totalHolders": 285665,
+      "totalShares": 4107627432
+    },
+    "2385": {
+      "date": "20261120",
+      "big1000Holders": 99,
+      "big1000Pct": 68.43,
+      "big400Holders": 165,
+      "big400Pct": 73.89,
+      "retailHolders": 47649,
+      "retailPct": 11.23,
+      "totalHolders": 50758,
+      "totalShares": 765721188
+    },
+    "2881": {
+      "date": "20261120",
+      "big1000Holders": 524,
+      "big1000Pct": 84.73,
+      "big400Holders": 1034,
+      "big400Pct": 86.96,
+      "retailHolders": 342090,
+      "retailPct": 4.25,
+      "totalHolders": 379038,
+      "totalShares": 14007364952
+    },
+    "2882": {
+      "date": "20261120",
+      "big1000Holders": 685,
+      "big1000Pct": 83.74,
+      "big400Holders": 1260,
+      "big400Pct": 86.16,
+      "retailHolders": 355135,
+      "retailPct": 4.59,
+      "totalHolders": 395142,
+      "totalShares": 14669210128
+    },
+    "3034": {
+      "date": "20261120",
+      "big1000Holders": 103,
+      "big1000Pct": 59.67,
+      "big400Holders": 228,
+      "big400Pct": 72.51,
+      "retailHolders": 82701,
+      "retailPct": 8.92,
+      "totalHolders": 84743,
+      "totalShares": 611511469
+    },
+    "3231": {
+      "date": "20261120",
+      "big1000Holders": 332,
+      "big1000Pct": 65.04,
+      "big400Holders": 567,
+      "big400Pct": 69.22,
+      "retailHolders": 326606,
+      "retailPct": 15.01,
+      "totalHolders": 342430,
+      "totalShares": 3429842250
+    },
+    "5871": {
+      "date": "20261120",
+      "big1000Holders": 208,
+      "big1000Pct": 64.37,
+      "big400Holders": 364,
+      "big400Pct": 69.95,
+      "retailHolders": 105555,
+      "retailPct": 10.31,
+      "totalHolders": 115679,
+      "totalShares": 1745649584
+    },
+    "6669": {
+      "date": "20261120",
+      "big1000Holders": 58,
+      "big1000Pct": 63.76,
+      "big400Holders": 152,
+      "big400Pct": 73.96,
+      "retailHolders": 223344,
+      "retailPct": 9.82,
+      "totalHolders": 225099,
+      "totalShares": 584778747
+    }
+  }
+}
