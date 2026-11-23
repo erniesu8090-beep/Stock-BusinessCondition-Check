@@ -1,7 +1,7 @@
 # 專案進度交接 (PROGRESS.md)
 
-- **最後更新**：2026-11-22（`home`）
-- **目前狀態**：已完成完工收納、自訂 `.ico` 圖示與操作手冊 PDF，全項實測通過。
+- **最後更新**：2026-11-23（`controlled`）
+- **目前狀態**：已完成完工收納、離線靜態 CSS 內嵌，並新增觀察名單與大盤之盤中零延遲即時股價輪詢（`/api/realtime`）與動態估值／買點重算。
 
 ## 已完成與架構決定
 - 建立專案結構：`start_dashboard.bat`、`src/fetcher.py`、`src/server.py`、`data/latest_market_data.json`、`code_artifact.html`、`AGENTS.md`、`README.md`、`requirements.txt`、`.gitignore`。
@@ -22,3 +22,5 @@
 - 2026-11-22（三版籌碼升級）：整合集保中心 TDCC（千張/400張大戶與 10 張以下散戶人數，存週歷史檔 `data/tdcc_weekly_history.json`）、`rsi.pttstock.tw` 近 4 週大戶變動與富邦嘉實前 15 大主力買賣超及最大買賣分點，於觀察名單與維度三即時展示大戶動向。
 - 2026-11-22（啟動效能與卡頓修復）：新增集保 TDCC 本週快取命中與 45 秒逾時自動回退機制、與 12 檔個股並行抓取及終端機 `1/5`～`5/5` 即時進度輸出；伺服器改為秒開後於背景非同步同步（搭配互斥鎖與 `/api/health` 同步狀態）；前端「一鍵同步」逾時調寬至 65 秒並支援背景同步完成自動刷新畫面。
 - 2026-11-22（冗餘清理、自訂圖示與完工收納）：清除 `src/fetcher.py` 未使用變數 `recent_3` 與 `code_artifact.html` 過時註解；設計多尺寸 `assets/app.ico` 並掛載至網頁 favicon（`/favicon.ico`）與根目錄捷徑 `台股籌碼儀表板.lnk`；將 `code_artifact.html` 收進 `src/`（同步調整為 `../assets/` 相對路徑與 `server.py` 的 `HTML_PATH`），將 `README.md`、`PROGRESS.md` 與觀察名單 PDF 收進 `docs/`，於根目錄產出 `台股籌碼風險判讀儀表板_操作手冊.pdf`，並將 `AGENTS.md` 改指 `docs/PROGRESS.md` 且設為 Windows 隱藏檔。
+- 2026-11-23（離線／受限網路靜態 CSS 內嵌修復）：於 `controlled` 環境實測發現 `cdn.tailwindcss.com` 連線遭重置導致整頁排版失效；改以 Tailwind CSS v3 預編譯本頁（含 JS 動態狀態）全部 251 個類別為純靜態 CSS 並直接內嵌進 `src/code_artifact.html` 的 `<style>`，同步移除外部 `cdn.tailwindcss.com` 與 Google Fonts 請求依賴，補上繁中系統字型備援與 `font-size-adjust: from-font`；實測 `--sync-only`、`GET /`、`GET /api/latest`、`POST /api/sync` 及 `node --check` 全數通過。
+- 2026-11-23（盤中即時股價與明細升級）：於 `src/fetcher.py` 抽離 `_compute_stock_entry_metrics()` 並新增 `fetch_realtime_quotes()`（鉅亨網 `ws.api.cnyes.com` 零延遲主抓＋證交所 MIS 自動備援，處理 MIS `z="-"` 撮合空檔），同步於完整同步時疊加零延遲報價；於 `src/server.py` 新增帶 2 秒短快取之 `GET /api/realtime` 與 `/api/health` 的 `realtimeSupported` 標記；於 `src/code_artifact.html` 加入盤中 15 秒自動輪詢（含手動刷新、暫停開關與分頁隱藏暫停）、頂部「籌碼基準日」與「報價時間」分離、加權與台積電即時連動、表格及展開區盤中開高低量明細、價位變動微閃爍與買點／本益比／殖利率即時重算（並補齊靜態內嵌 CSS）；實測 `--sync-only`、靜態 CSS 類別稽核、`node --check` 及 `GET /api/realtime` 全數通過。

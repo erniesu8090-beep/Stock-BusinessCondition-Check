@@ -862,6 +862,78 @@ def fetch_fubon_broker_summary(
     }
 
 
+def _compute_stock_entry_metrics(
+    spec: dict[str, Any],
+    close_now: float,
+    prev_close: float,
+    ma5: float,
+    ma10: float,
+    ma20: float,
+    kd: dict[str, float],
+) -> dict[str, Any]:
+    """依股價、均線、KD 與基本面共識計算估值指標與買點評估狀態。"""
+    close_val = round(float(close_now), 2)
+    prev_val = float(prev_close) if prev_close else close_val
+    chg = round(close_val - prev_val, 2) if prev_val else 0.0
+    chg_pct = round(((close_val - prev_val) / prev_val) * 100.0, 2) if prev_val else 0.0
+
+    pe_2026e = round(close_val / spec["eps2026E"], 2) if spec["eps2026E"] else 0.0
+    pe_2027e = round(close_val / spec["eps2027E"], 2) if spec["eps2027E"] else 0.0
+    yield_2027e = round((spec["div2027E"] / close_val) * 100.0, 2) if close_val else 0.0
+
+    low52 = spec["low52"]
+    dist_52_low_pct = round(((close_val - low52) / low52) * 100.0, 1) if low52 else 0.0
+    zone_low, zone_high = spec["buyZone"]
+    right_confirm_price = round(max(ma5, ma10), 1)
+    k_val = float(kd.get("k", 50.0))
+    d_val = float(kd.get("d", 50.0))
+
+    # 評估是否達可買進價位
+    # 1. 右側轉強買進確認：站上 5 日與 10 日均線且日 KD 偏多或金叉向上
+    if close_val >= ma5 and close_val >= ma10 and (k_val > d_val or k_val >= 50) and pe_2027e <= 16.5:
+        entry_status = "buy_right"
+        entry_label = "右側買進確認"
+        entry_reason = f"已站回 5/10 日均線（{right_confirm_price} 元），且 2027E 本益比 {pe_2027e} 倍具性價比。"
+    # 2. 補跌破線觀望（例如單日暴跌逾 5.8% 且距離 52 週低點仍遠 > 20%）
+    elif chg_pct <= -5.8 and dist_52_low_pct >= 20.0 and close_val > zone_high:
+        entry_status = "wait"
+        entry_label = "補跌修正・暫觀望"
+        entry_reason = f"單日補跌 {chg_pct:.2f}% 且距 52 週低點仍遠，勿第一天急接，等止跌或靠攏 {zone_low}~{zone_high} 元。"
+    # 3. 落入左側價值買進區間或貼近 52 週低點 7.5% 以內
+    elif close_val <= zone_high or dist_52_low_pct <= 7.5:
+        entry_status = "buy_left"
+        entry_label = "達左側首波試單價"
+        if dist_52_low_pct <= 3.0:
+            entry_reason = f"逼近 52 週低點 {low52} 元（僅差 {dist_52_low_pct:.1f}%），2027E PE {pe_2027e} 倍、殖利率 {yield_2027e:.1f}%，可左側試單。"
+        else:
+            entry_reason = f"進入合理買進區間（{zone_low}~{zone_high} 元），前瞻 PE {pe_2027e} 倍，適合小額分批建立第 1 批底倉。"
+    # 4. 距買點在 6.5% 以內，列為接近買點
+    elif ((close_val - zone_high) / zone_high) * 100.0 <= 6.5:
+        entry_status = "watch_near"
+        gap_pct = round(((close_val - zone_high) / zone_high) * 100.0, 1)
+        entry_label = "估值偏低・接近買點"
+        entry_reason = f"距左側試單上緣 {zone_high} 元僅差 {gap_pct}%（或等站回 5/10 日線 {right_confirm_price} 元右側轉強再接）。"
+    else:
+        entry_status = "wait"
+        entry_label = "價位未到・續等待"
+        entry_reason = f"仍高於買進區間 {zone_high} 元且未站穩短均線，建議耐心等待拉回買點或轉強訊號。"
+
+    return {
+        "close": close_val,
+        "change": chg,
+        "changePct": chg_pct,
+        "prevClose": round(prev_val, 2),
+        "pe2026E": pe_2026e,
+        "pe2027E": pe_2027e,
+        "yield2027E": yield_2027e,
+        "dist52LowPct": dist_52_low_pct,
+        "rightConfirmPrice": right_confirm_price,
+        "entryStatus": entry_status,
+        "entryLabel": entry_label,
+        "entryReason": entry_reason,
+    }
+
+
 def _evaluate_watchlist_stock(
     spec: dict[str, Any],
     candles: list[dict[str, Any]],
@@ -874,54 +946,23 @@ def _evaluate_watchlist_stock(
     last = candles[-1]
     prev = candles[-2] if len(candles) >= 2 else last
     close_now = round(last["close"], 2)
-    chg_pct = round(
-        ((close_now - prev["close"]) / prev["close"]) * 100.0 if prev["close"] else 0.0,
-        2,
-    )
     ma5 = round(_compute_ma(closes, 5) or close_now, 2)
     ma10 = round(_compute_ma(closes, 10) or close_now, 2)
     ma20 = round(_compute_ma(closes, 20) or close_now, 2)
     kd = _compute_kd(candles, period=9)
 
-    pe_2026e = round(close_now / spec["eps2026E"], 2) if spec["eps2026E"] else 0.0
-    pe_2027e = round(close_now / spec["eps2027E"], 2) if spec["eps2027E"] else 0.0
-    yield_2027e = round((spec["div2027E"] / close_now) * 100.0, 2) if close_now else 0.0
-
     low52 = spec["low52"]
     high52 = spec["high52"]
-    dist_52_low_pct = round(((close_now - low52) / low52) * 100.0, 1) if low52 else 0.0
     zone_low, zone_high = spec["buyZone"]
-    right_confirm_price = round(max(ma5, ma10), 1)
-
-    # 評估是否達可買進價位
-    # 1. 右側轉強買進確認：站上 5 日與 10 日均線且日 KD 偏多或金叉向上
-    if close_now >= ma5 and close_now >= ma10 and (kd["k"] > kd["d"] or kd["k"] >= 50) and pe_2027e <= 16.5:
-        entry_status = "buy_right"
-        entry_label = "右側買進確認"
-        entry_reason = f"已站回 5/10 日均線（{right_confirm_price} 元），且 2027E 本益比 {pe_2027e} 倍具性價比。"
-    # 2. 補跌破線觀望（例如單日暴跌逾 5.8% 且距離 52 週低點仍遠 > 20%）
-    elif chg_pct <= -5.8 and dist_52_low_pct >= 20.0 and close_now > zone_high:
-        entry_status = "wait"
-        entry_label = "補跌修正・暫觀望"
-        entry_reason = f"單日補跌 {chg_pct:.2f}% 且距 52 週低點仍遠，勿第一天急接，等止跌或靠攏 {zone_low}~{zone_high} 元。"
-    # 3. 落入左側價值買進區間或貼近 52 週低點 7.5% 以內
-    elif close_now <= zone_high or dist_52_low_pct <= 7.5:
-        entry_status = "buy_left"
-        entry_label = "達左側首波試單價"
-        if dist_52_low_pct <= 3.0:
-            entry_reason = f"逼近 52 週低點 {low52} 元（僅差 {dist_52_low_pct:.1f}%），2027E PE {pe_2027e} 倍、殖利率 {yield_2027e:.1f}%，可左側試單。"
-        else:
-            entry_reason = f"進入合理買進區間（{zone_low}~{zone_high} 元），前瞻 PE {pe_2027e} 倍，適合小額分批建立第 1 批底倉。"
-    # 4. 距買點在 6% 以內，列為接近買點
-    elif ((close_now - zone_high) / zone_high) * 100.0 <= 6.5:
-        entry_status = "watch_near"
-        gap_pct = round(((close_now - zone_high) / zone_high) * 100.0, 1)
-        entry_label = "估值偏低・接近買點"
-        entry_reason = f"距左側試單上緣 {zone_high} 元僅差 {gap_pct}%（或等站回 5/10 日線 {right_confirm_price} 元右側轉強再接）。"
-    else:
-        entry_status = "wait"
-        entry_label = "價位未到・續等待"
-        entry_reason = f"仍高於買進區間 {zone_high} 元且未站穩短均線，建議耐心等待拉回買點或轉強訊號。"
+    metrics = _compute_stock_entry_metrics(
+        spec,
+        close_now=close_now,
+        prev_close=prev["close"],
+        ma5=ma5,
+        ma10=ma10,
+        ma20=ma20,
+        kd=kd,
+    )
 
     # 整合籌碼三件套 (集保 TDCC + RSI20 近4週大戶趨勢 + 富邦嘉實前15大主力分點)
     tdcc = tdcc_item or {}
@@ -990,28 +1031,317 @@ def _evaluate_watchlist_stock(
         "name": spec["name"],
         "sector": spec["sector"],
         "category": spec["category"],
-        "close": close_now,
-        "changePct": chg_pct,
+        **metrics,
+        "open": round(last["open"], 2),
+        "high": round(last["high"], 2),
+        "low": round(last["low"], 2),
+        "volumeLots": int(round(last.get("volume", 0) / 1000.0)),
+        "quoteDate": last.get("date", ""),
+        "quoteTime": "",
+        "quoteSource": "yahoo",
+        "isRealtime": False,
         "ma5": ma5,
         "ma10": ma10,
         "ma20": ma20,
         "kd": kd,
-        "pe2026E": pe_2026e,
-        "pe2027E": pe_2027e,
         "div2027E": spec["div2027E"],
-        "yield2027E": yield_2027e,
         "payoutPct": spec["payoutPct"],
         "low52": low52,
         "high52": high52,
-        "dist52LowPct": dist_52_low_pct,
         "buyZoneLow": zone_low,
         "buyZoneHigh": zone_high,
-        "rightConfirmPrice": right_confirm_price,
-        "entryStatus": entry_status,
-        "entryLabel": entry_label,
-        "entryReason": entry_reason,
         "note": spec["note"],
         "chips": chips_payload,
+    }
+
+
+def _fetch_cnyes_quotes(
+    session: requests.Session, codes: list[str]
+) -> dict[str, dict[str, Any]]:
+    """從鉅亨網公開即時報價 API 批次抓取台股與加權指數零延遲報價。"""
+    tz_taipei = dt.timezone(dt.timedelta(hours=8))
+    syms = [
+        "TWS:TWII:INDEX" if c == "TWII" else f"TWS:{c}:STOCK"
+        for c in codes
+    ]
+    url = f"https://ws.api.cnyes.com/ws/api/v1/quote/quotes/{','.join(syms)}"
+    resp = session.get(url, timeout=6)
+    resp.raise_for_status()
+    payload = resp.json()
+    items = payload.get("data") or []
+    if payload.get("statusCode") != 200 or not isinstance(items, list):
+        return {}
+
+    quotes: dict[str, dict[str, Any]] = {}
+    for item in items:
+        raw_sym = str(item.get("0") or "")
+        code = "TWII" if raw_sym == "TWS:TWII:INDEX" else str(item.get("200010") or "").strip()
+        if not code:
+            continue
+        price = _parse_number(item.get("6"))
+        prev_close = _parse_number(item.get("21"))
+        if price is None or price <= 0:
+            continue
+        ts = item.get("200007")
+        q_date = ""
+        q_time = ""
+        if isinstance(ts, (int, float)) and ts > 0:
+            q_dt = dt.datetime.fromtimestamp(int(ts), tz=tz_taipei)
+            q_date = q_dt.strftime("%Y-%m-%d")
+            q_time = q_dt.strftime("%H:%M:%S")
+
+        chg = _parse_number(item.get("11"))
+        chg_pct = _parse_number(item.get("56"))
+        if chg is None and prev_close:
+            chg = round(price - prev_close, 2)
+        if chg_pct is None and prev_close:
+            chg_pct = round(((price - prev_close) / prev_close) * 100.0, 2)
+
+        vol_raw = _parse_number(item.get("800001"))
+        quotes[code] = {
+            "code": code,
+            "price": round(float(price), 2),
+            "prevClose": round(float(prev_close), 2) if prev_close else round(float(price), 2),
+            "open": round(float(_parse_number(item.get("19")) or price), 2),
+            "high": round(float(_parse_number(item.get("12")) or price), 2),
+            "low": round(float(_parse_number(item.get("13")) or price), 2),
+            "change": round(float(chg or 0.0), 2),
+            "changePct": round(float(chg_pct or 0.0), 2),
+            "volumeLots": int(round(vol_raw)) if vol_raw is not None else None,
+            "quoteDate": q_date,
+            "quoteTime": q_time,
+            "quoteTs": int(ts) if isinstance(ts, (int, float)) else 0,
+            "source": "cnyes",
+        }
+    return quotes
+
+
+def _fetch_twse_mis_quotes(
+    session: requests.Session, codes: list[str]
+) -> dict[str, dict[str, Any]]:
+    """從台灣證交所 MIS 即時揭示 API 批次抓取台股與加權指數報價（自動備援）。"""
+    ex_ch = "|".join(
+        "tse_t00.tw" if c == "TWII" else f"tse_{c}.tw"
+        for c in codes
+    )
+    url = f"https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch={ex_ch}&json=1&delay=0"
+    resp = session.get(url, timeout=8)
+    resp.raise_for_status()
+    payload = resp.json()
+    rows = payload.get("msgArray") or []
+    if not isinstance(rows, list):
+        return {}
+
+    quotes: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        raw_code = str(row.get("c") or "").strip()
+        if not raw_code:
+            continue
+        code = "TWII" if raw_code == "t00" else raw_code
+
+        prev_close = _parse_number(row.get("y"))
+        z_val = _parse_number(row.get("z"))
+        trade_z = _parse_number((row.get("trade") or {}).get("z"))
+        pz_val = _parse_number(row.get("pz"))
+        b1 = _parse_number((str(row.get("b") or "")).split("_")[0])
+        a1 = _parse_number((str(row.get("a") or "")).split("_")[0])
+
+        # 盤中 5 秒撮合空檔 z 常為 "-"，先用最新成交子欄位，若已偏離即時五檔則取買賣中價
+        price: float | None = None
+        if z_val is not None and z_val > 0:
+            price = z_val
+        elif trade_z is not None and trade_z > 0:
+            if b1 and a1 and b1 > 0 and a1 > 0 and (trade_z < b1 * 0.995 or trade_z > a1 * 1.005):
+                price = round((b1 + a1) / 2.0, 2)
+            else:
+                price = trade_z
+        elif pz_val is not None and pz_val > 0:
+            price = pz_val
+        elif b1 and a1 and b1 > 0 and a1 > 0:
+            price = round((b1 + a1) / 2.0, 2)
+        elif b1 and b1 > 0:
+            price = b1
+        elif a1 and a1 > 0:
+            price = a1
+        elif prev_close and prev_close > 0:
+            price = prev_close
+
+        if price is None or price <= 0:
+            continue
+
+        prev_val = prev_close if (prev_close and prev_close > 0) else price
+        chg = round(price - prev_val, 2)
+        chg_pct = round(((price - prev_val) / prev_val) * 100.0, 2) if prev_val else 0.0
+
+        d_raw = str(row.get("d") or "").strip()
+        q_date = (
+            f"{d_raw[:4]}-{d_raw[4:6]}-{d_raw[6:8]}"
+            if len(d_raw) == 8 and d_raw.isdigit()
+            else ""
+        )
+        q_time = str(row.get("t") or "").strip()
+        vol_val = _parse_number(row.get("v"))
+        tlong_val = _parse_number(row.get("tlong"))
+
+        quotes[code] = {
+            "code": code,
+            "price": round(float(price), 2),
+            "prevClose": round(float(prev_val), 2),
+            "open": round(float(_parse_number(row.get("o")) or price), 2),
+            "high": round(float(_parse_number(row.get("h")) or price), 2),
+            "low": round(float(_parse_number(row.get("l")) or price), 2),
+            "change": chg,
+            "changePct": chg_pct,
+            "volumeLots": int(round(vol_val)) if (vol_val is not None and code != "TWII") else None,
+            "quoteDate": q_date,
+            "quoteTime": q_time,
+            "quoteTs": int(tlong_val // 1000) if tlong_val else 0,
+            "source": "twse_mis",
+        }
+    return quotes
+
+
+def _resolve_market_status(quote_date: str) -> tuple[str, str, bool]:
+    """依台北時間與報價日期判定目前盤別狀態（live / pre_open / closed）。"""
+    tz_taipei = dt.timezone(dt.timedelta(hours=8))
+    now_tw = dt.datetime.now(tz_taipei)
+    today_str = now_tw.strftime("%Y-%m-%d")
+    hhmm = now_tw.hour * 100 + now_tw.minute
+    is_weekday = now_tw.weekday() < 5
+
+    if is_weekday and 900 <= hhmm <= 1335 and (not quote_date or quote_date == today_str):
+        return "live", "盤中即時", True
+    if is_weekday and 830 <= hhmm < 900:
+        return "pre_open", "盤前試撮", True
+    return "closed", "已收盤", False
+
+
+def fetch_realtime_quotes(
+    cached_data: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """輕量抓取大盤與 12 檔觀察名單即時股價（鉅亨網主抓 + 證交所 MIS 自動備援），並重算估值與買點狀態。"""
+    if cached_data is None:
+        cached_data = load_latest_market_data() or {}
+
+    cached_wl_map: dict[str, dict[str, Any]] = {
+        str(item.get("code")): item
+        for item in (cached_data.get("watchlist") or [])
+        if item.get("code")
+    }
+    target_codes = ["TWII"] + [s["code"] for s in WATCHLIST_SPECS]
+
+    quotes: dict[str, dict[str, Any]] = {}
+    used_sources: list[str] = []
+    errors: list[str] = []
+
+    with requests.Session() as s:
+        s.headers.update(DEFAULT_HEADERS)
+        try:
+            quotes = _fetch_cnyes_quotes(s, target_codes)
+            if quotes:
+                used_sources.append("cnyes")
+        except Exception as exc:
+            errors.append(f"鉅亨即時報價失敗: {exc}")
+
+        missing = [c for c in target_codes if c not in quotes]
+        if missing:
+            try:
+                mis_quotes = _fetch_twse_mis_quotes(s, missing)
+                if mis_quotes:
+                    quotes.update(mis_quotes)
+                    used_sources.append("twse_mis")
+            except Exception as exc:
+                errors.append(f"證交所 MIS 報價失敗: {exc}")
+
+    if not quotes:
+        raise RuntimeError("無法取得即時報價（" + "；".join(errors or ["上游無回應"]) + "）")
+
+    latest_q_date = max((q.get("quoteDate") or "" for q in quotes.values()), default="")
+    latest_q_time = max(
+        (
+            q.get("quoteTime") or ""
+            for q in quotes.values()
+            if not latest_q_date or q.get("quoteDate") == latest_q_date
+        ),
+        default="",
+    )
+    market_status, market_status_label, is_realtime = _resolve_market_status(latest_q_date)
+
+    source_name_map = {"cnyes": "鉅亨網即時", "twse_mis": "證交所 MIS"}
+    source_label = "＋".join(source_name_map.get(src, src) for src in used_sources) or "即時報價"
+
+    stocks_out: dict[str, dict[str, Any]] = {}
+    buy_ready = 0
+    watch_near = 0
+    wait_count = 0
+
+    for spec in WATCHLIST_SPECS:
+        code = spec["code"]
+        q = quotes.get(code)
+        cached_item = cached_wl_map.get(code) or {}
+        if not q and not cached_item:
+            continue
+
+        price = float(q["price"]) if q else float(cached_item.get("close", 0.0))
+        prev_close = float(q["prevClose"]) if q else float(cached_item.get("prevClose") or price)
+        ma5 = float(cached_item.get("ma5") or price)
+        ma10 = float(cached_item.get("ma10") or price)
+        ma20 = float(cached_item.get("ma20") or price)
+        kd = cached_item.get("kd") or {"k": 50.0, "d": 50.0, "prev_k": 50.0, "prev_d": 50.0}
+
+        metrics = _compute_stock_entry_metrics(
+            spec,
+            close_now=price,
+            prev_close=prev_close,
+            ma5=ma5,
+            ma10=ma10,
+            ma20=ma20,
+            kd=kd,
+        )
+        if metrics["entryStatus"] in ("buy_left", "buy_right"):
+            buy_ready += 1
+        elif metrics["entryStatus"] == "watch_near":
+            watch_near += 1
+        else:
+            wait_count += 1
+
+        stocks_out[code] = {
+            "code": code,
+            "price": metrics["close"],
+            **metrics,
+            "open": q["open"] if q else cached_item.get("open", metrics["close"]),
+            "high": q["high"] if q else cached_item.get("high", metrics["close"]),
+            "low": q["low"] if q else cached_item.get("low", metrics["close"]),
+            "volumeLots": q["volumeLots"] if q else cached_item.get("volumeLots"),
+            "quoteDate": q["quoteDate"] if q else cached_item.get("quoteDate", latest_q_date),
+            "quoteTime": q["quoteTime"] if q else cached_item.get("quoteTime", latest_q_time),
+            "quoteSource": q["source"] if q else cached_item.get("quoteSource", "cache"),
+            "isRealtime": is_realtime,
+        }
+
+    twii_q = quotes.get("TWII")
+    tsmc_out = stocks_out.get("2330")
+    tz_taipei = dt.timezone(dt.timedelta(hours=8))
+
+    return {
+        "fetchedAt": dt.datetime.now(tz_taipei).strftime("%Y-%m-%d %H:%M:%S"),
+        "quoteDate": latest_q_date,
+        "quoteTime": latest_q_time,
+        "marketStatus": market_status,
+        "marketStatusLabel": market_status_label,
+        "isRealtime": is_realtime,
+        "source": "+".join(used_sources),
+        "sourceLabel": source_label,
+        "twii": twii_q,
+        "tsmc": tsmc_out,
+        "stocks": stocks_out,
+        "watchlistSummary": {
+            "total": len(stocks_out),
+            "buyReady": buy_ready,
+            "watchNear": watch_near,
+            "wait": wait_count,
+        },
+        "errors": errors,
     }
 
 
@@ -1278,6 +1608,38 @@ def fetch_all_market_data(force_tdcc: bool = False) -> dict[str, Any]:
         latest_market_date=data_date,
         force_tdcc=force_tdcc,
     )
+
+    # 以零延遲即時報價覆蓋 Yahoo 20 分鐘延遲股價（若盤後則自動帶入最新收盤與盤中高低量）
+    quote_date = latest_date
+    quote_time = ""
+    market_status = "closed"
+    market_status_label = "已收盤"
+    quote_source_label = "Yahoo 日K"
+    try:
+        rt_payload = fetch_realtime_quotes({"watchlist": watchlist_items})
+        quote_date = rt_payload.get("quoteDate") or quote_date
+        quote_time = rt_payload.get("quoteTime") or ""
+        market_status = rt_payload.get("marketStatus") or "closed"
+        market_status_label = rt_payload.get("marketStatusLabel") or "已收盤"
+        quote_source_label = rt_payload.get("sourceLabel") or quote_source_label
+
+        rt_twii = rt_payload.get("twii") or {}
+        if rt_twii.get("price"):
+            twii_close = round(float(rt_twii["price"]), 2)
+            twii_change = round(float(rt_twii.get("change") or 0.0), 2)
+            twii_change_pct = round(float(rt_twii.get("changePct") or 0.0), 2)
+
+        rt_stocks = rt_payload.get("stocks") or {}
+        for idx, wl_item in enumerate(watchlist_items):
+            rt_item = rt_stocks.get(wl_item["code"])
+            if rt_item:
+                watchlist_items[idx] = {**wl_item, **rt_item}
+                if wl_item["code"] == "2330" and tsmc_info:
+                    tsmc_info["close"] = round(float(rt_item["close"]), 1)
+                    tsmc_info["change_pct"] = round(float(rt_item["changePct"]), 2)
+    except Exception as exc:
+        errors.append(f"即時報價疊加略過（改用日K）：{exc}")
+
     buy_ready_count = sum(1 for x in watchlist_items if x["entryStatus"] in ("buy_left", "buy_right"))
     near_count = sum(1 for x in watchlist_items if x["entryStatus"] == "watch_near")
     wait_count = sum(1 for x in watchlist_items if x["entryStatus"] == "wait")
@@ -1313,12 +1675,13 @@ def fetch_all_market_data(force_tdcc: bool = False) -> dict[str, Any]:
 
     # 8. 組合人類可讀的專業摘要
     date_label = f"{data_date.replace('-', '/')} 收盤"
+    price_verb = "盤中" if market_status == "live" else "收"
     summary_parts = [
-        f"加權指數收 {twii_close:,.0f} 點（{twii_change:+.0f} 點 / {twii_change_pct:+.2f}%），"
+        f"加權指數{price_verb} {twii_close:,.0f} 點（{twii_change:+.0f} 點 / {twii_change_pct:+.2f}%），"
         f"成交金額 {volume_billion:,.0f} 億元（20日均量比 {vol_ratio:.2f}x），"
         f"外資台指期淨部位 {futures_net:+,} 口、近 5 日現貨 {spot_net_5d:+,} 億元，"
         f"散戶小台＋微台綜合多空比 {retail_combined_ratio:+.1f}%（純小台 {retail_mtx_only_ratio:+.1f}%），"
-        f"台積電收 {tsmc_info.get('close', '--')} 元（月線 {tsmc_info.get('ma20', '--')}），"
+        f"台積電{price_verb} {tsmc_info.get('close', '--')} 元（月線 {tsmc_info.get('ma20', '--')}），"
         f"大盤單日融資 {margin_change_1d_b:+.1f} 億元（維持率推算 {margin_maint_ratio:.1f}%），"
         f"日線 K={kd_info['k']:.1f} / D={kd_info['d']:.1f}。"
     ]
@@ -1327,6 +1690,11 @@ def fetch_all_market_data(force_tdcc: bool = False) -> dict[str, Any]:
         "fetchedAt": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "dateLabel": date_label,
         "dataDate": data_date,
+        "quoteDate": quote_date,
+        "quoteTime": quote_time,
+        "marketStatus": market_status,
+        "marketStatusLabel": market_status_label,
+        "quoteSourceLabel": quote_source_label,
         "summary": "".join(summary_parts),
         "futuresNet": max(-120000, min(40000, int(futures_net))),
         "futuresNetRaw": int(futures_net),

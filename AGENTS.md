@@ -21,7 +21,8 @@
 - **已知的坑**：
   - 集保中心 TDCC OpenData 下載（`getOD.ashx?id=1-5`）請求必須帶瀏覽器 `User-Agent`，否則會觸發 `TooManyRedirects`；CSV 證券代號欄位含尾隨空白須 `.strip()`。
   - 集保 TDCC OpenData CSV (2.4MB) 未壓縮常耗時 20～35 秒，應使用週快取並提供失敗回退，前端同步逾時須 ≥60 秒；Windows 本機埠號探測須用 `socket.bind` 而非 `connect_ex`（未開啟埠會阻塞約 2 秒）。
-- **前端介面**：單一 HTML 檔案（`src/code_artifact.html`，Tailwind CSS CDN + 原生 JS + `localStorage` + 原生 `page-mascot` (`kamran`) 互動元件），數據透過 `<script id="embedded-market-data" type="application/json">` 區塊注入更新。
+  - 管制／受限網路會重置 `cdn.tailwindcss.com` 連線，且單檔需支援完全離線開啟；`src/code_artifact.html` 嚴禁依賴外部 CSS CDN，新增未用過的 Tailwind class 須同步預編譯靜態 CSS 內嵌於 `<style>`。
+- **前端介面**：單一 HTML 檔案（`src/code_artifact.html`，預編譯靜態 Tailwind CSS 內嵌 + 原生 JS + `localStorage` + 原生 `page-mascot` (`kamran`) 互動元件），數據透過 `<script id="embedded-market-data" type="application/json">` 區塊注入更新。
 
 ## 3. 不可更動與安全規範
 - Python 內嵌多行 HTML/JS 範本時，若於 Python 檔案內使用字串必須使用原始字串 `r"""..."""`，或將 HTML 範本獨立維持正確 UTF-8 編碼；每次更新後必須驗證抽出 `<script>` 區塊以 `node --check` 通過語法檢查。

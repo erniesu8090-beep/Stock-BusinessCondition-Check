@@ -22,7 +22,11 @@ BASE_DIR = SRC_DIR.parent
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from fetcher import fetch_all_market_data, load_latest_market_data  # noqa: E402
+from fetcher import (  # noqa: E402
+    fetch_all_market_data,
+    fetch_realtime_quotes,
+    load_latest_market_data,
+)
 
 HTML_PATH = SRC_DIR / "code_artifact.html"
 MASCOT_DIR = BASE_DIR / "assets" / "mascots"
@@ -39,6 +43,29 @@ _sync_state: dict[str, Any] = {
     "lastFetchedAt": None,
     "lastFinishedMono": 0.0,
 }
+
+_realtime_lock = threading.Lock()
+_realtime_cache: dict[str, Any] = {
+    "fetchedMono": 0.0,
+    "payload": None,
+}
+
+
+def get_realtime_quotes(force: bool = False, ttl_sec: float = 2.0) -> dict[str, Any]:
+    """輕量取得大盤與 12 檔觀察名單即時股價，並於短時間內快取去抖。"""
+    with _realtime_lock:
+        if (
+            not force
+            and _realtime_cache["payload"] is not None
+            and (time.monotonic() - float(_realtime_cache["fetchedMono"])) <= ttl_sec
+        ):
+            return _realtime_cache["payload"]
+
+        cached = load_latest_market_data() or {}
+        payload = fetch_realtime_quotes(cached_data=cached)
+        _realtime_cache["payload"] = payload
+        _realtime_cache["fetchedMono"] = time.monotonic()
+        return payload
 
 
 def embed_market_data_into_html(data: dict[str, Any]) -> bool:
@@ -180,6 +207,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 {
                     "status": "ok",
                     "service": "tw-whale-dashboard",
+                    "realtimeSupported": True,
                     "syncing": bool(_sync_state["syncing"]),
                     "lastError": _sync_state["lastError"],
                     "fetchedAt": _sync_state["lastFetchedAt"]
@@ -187,6 +215,16 @@ class DashboardHandler(BaseHTTPRequestHandler):
                     "dataDate": cached.get("dataDate") if cached else None,
                 },
             )
+            return
+
+        if path == "/api/realtime":
+            query = parse_qs(urlparse(self.path).query)
+            force_rt = query.get("force", ["0"])[0].lower() in ("1", "true", "yes")
+            try:
+                payload = get_realtime_quotes(force=force_rt)
+                self._send_json(HTTPStatus.OK, payload)
+            except Exception as exc:
+                self._send_json(HTTPStatus.BAD_GATEWAY, {"error": str(exc)})
             return
 
         if path == "/api/latest":
