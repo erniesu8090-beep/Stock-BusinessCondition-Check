@@ -2,9 +2,14 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#F3EFE6" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="台股籌碼儀表板" />
   <title>台股大戶撤退與籌碼風險判讀儀表板</title>
   <link rel="icon" type="image/x-icon" href="../assets/app.ico" />
+  <link rel="apple-touch-icon" href="../assets/app_icon.png" />
   <style>
     /* 預編譯靜態 Tailwind CSS v3（支援完全離線與受限網路環境開啟，無外部 CDN 依賴） */
     *,:after,:before{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/*! tailwindcss v3.4.19 | MIT License | https://tailwindcss.com*/*,:after,:before{box-sizing:border-box;border:0 solid #e5e7eb}:after,:before{--tw-content:""}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:Inter,Noto Sans TC,PingFang TC,Microsoft JhengHei,sans-serif;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0}fieldset,legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::-moz-placeholder,textarea::-moz-placeholder{opacity:1;color:#9ca3af}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.pointer-events-auto{pointer-events:auto}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.bottom-0{bottom:0}.bottom-4{bottom:1rem}.bottom-5{bottom:1.25rem}.left-5{left:1.25rem}.right-4{right:1rem}.top-0{top:0}.z-30{z-index:30}.z-40{z-index:40}.z-50{z-index:50}.mx-auto{margin-left:auto;margin-right:auto}.mb-1{margin-bottom:.25rem}.mb-1\.5{margin-bottom:.375rem}.mb-2{margin-bottom:.5rem}.mb-3{margin-bottom:.75rem}.ml-1{margin-left:.25rem}.mr-1{margin-right:.25rem}.mt-0\.5{margin-top:.125rem}.mt-1{margin-top:.25rem}.mt-2\.5{margin-top:.625rem}.mt-3{margin-top:.75rem}.block{display:block}.inline-block{display:inline-block}.flex{display:flex}.inline-flex{display:inline-flex}.table{display:table}.grid{display:grid}.contents{display:contents}.hidden{display:none}.h-16{height:4rem}.h-2{height:.5rem}.h-24{height:6rem}.h-28{height:7rem}.h-4{height:1rem}.h-5{height:1.25rem}.h-full{height:100%}.min-h-screen{min-height:100vh}.w-2{width:.5rem}.w-4{width:1rem}.w-44{width:11rem}.w-56{width:14rem}.w-full{width:100%}.min-w-\[136px\]{min-width:136px}.min-w-\[36px\]{min-width:36px}.max-w-7xl{max-width:80rem}.max-w-\[260px\]{max-width:260px}.max-w-\[32px\]{max-width:32px}.max-w-full{max-width:100%}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.border-collapse{border-collapse:collapse}.transform{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@keyframes spin{to{transform:rotate(1turn)}}.animate-spin{animation:spin 1s linear infinite}.cursor-not-allowed{cursor:not-allowed}.cursor-pointer{cursor:pointer}.list-inside{list-style-position:inside}.list-disc{list-style-type:disc}.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-end{align-items:flex-end}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1{gap:.25rem}.gap-1\.5{gap:.375rem}.gap-2{gap:.5rem}.gap-2\.5{gap:.625rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}.gap-5{gap:1.25rem}.space-x-2>:not([hidden])~:not([hidden]){--tw-space-x-reverse:0;margin-right:calc(.5rem*var(--tw-space-x-reverse));margin-left:calc(.5rem*(1 - var(--tw-space-x-reverse)))}.space-y-1>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.25rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.25rem*var(--tw-space-y-reverse))}.space-y-1\.5>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.375rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.375rem*var(--tw-space-y-reverse))}.space-y-2>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.5rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.5rem*var(--tw-space-y-reverse))}.space-y-3>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.75rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.75rem*var(--tw-space-y-reverse))}.space-y-4>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem*var(--tw-space-y-reverse))}.space-y-5>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.25rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.25rem*var(--tw-space-y-reverse))}.divide-y>:not([hidden])~:not([hidden]){--tw-divide-y-reverse:0;border-top-width:calc(1px*(1 - var(--tw-divide-y-reverse)));border-bottom-width:calc(1px*var(--tw-divide-y-reverse))}.divide-\[\#EAE4D7\]>:not([hidden])~:not([hidden]){--tw-divide-opacity:1;border-color:rgb(234 228 215/var(--tw-divide-opacity,1))}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.truncate{overflow:hidden;text-overflow:ellipsis}.truncate,.whitespace-nowrap{white-space:nowrap}.rounded{border-radius:.25rem}.rounded-full{border-radius:9999px}.rounded-md{border-radius:.375rem}.rounded-sm{border-radius:.125rem}.rounded-t{border-top-left-radius:.25rem;border-top-right-radius:.25rem}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-l-4{border-left-width:4px}.border-l-8{border-left-width:8px}.border-t{border-top-width:1px}.border-dashed{border-style:dashed}.border-\[\#0369A1\]\/30{border-color:rgba(3,105,161,.3)}.border-\[\#0369A1\]\/40{border-color:rgba(3,105,161,.4)}.border-\[\#15803D\]\/30{border-color:rgba(21,128,61,.3)}.border-\[\#15803D\]\/35{border-color:rgba(21,128,61,.35)}.border-\[\#1E2022\]{--tw-border-opacity:1;border-color:rgb(30 32 34/var(--tw-border-opacity,1))}.border-\[\#333639\]{--tw-border-opacity:1;border-color:rgb(51 54 57/var(--tw-border-opacity,1))}.border-\[\#404448\]{--tw-border-opacity:1;border-color:rgb(64 68 72/var(--tw-border-opacity,1))}.border-\[\#B45309\]\/30{border-color:rgba(180,83,9,.3)}.border-\[\#BE123C\]\/30{border-color:rgba(190,18,60,.3)}.border-\[\#D5CFC2\]{--tw-border-opacity:1;border-color:rgb(213 207 194/var(--tw-border-opacity,1))}.border-\[\#D97706\]\/35{border-color:rgba(217,119,6,.35)}.border-\[\#D97706\]\/40{border-color:rgba(217,119,6,.4)}.border-\[\#E5E0D5\]{--tw-border-opacity:1;border-color:rgb(229 224 213/var(--tw-border-opacity,1))}.border-l-\[\#0369A1\]{--tw-border-opacity:1;border-left-color:rgb(3 105 161/var(--tw-border-opacity,1))}.border-l-\[\#1E2022\]{--tw-border-opacity:1;border-left-color:rgb(30 32 34/var(--tw-border-opacity,1))}.border-l-\[\#B45309\]{--tw-border-opacity:1;border-left-color:rgb(180 83 9/var(--tw-border-opacity,1))}.bg-\[\#1E2022\]{--tw-bg-opacity:1;background-color:rgb(30 32 34/var(--tw-bg-opacity,1))}.bg-\[\#2D3033\]{--tw-bg-opacity:1;background-color:rgb(45 48 51/var(--tw-bg-opacity,1))}.bg-\[\#DCFCE7\]{--tw-bg-opacity:1;background-color:rgb(220 252 231/var(--tw-bg-opacity,1))}.bg-\[\#DCFCE7\]\/70{background-color:rgba(220,252,231,.7)}.bg-\[\#E0F2FE\]{--tw-bg-opacity:1;background-color:rgb(224 242 254/var(--tw-bg-opacity,1))}.bg-\[\#E0F2FE\]\/45{background-color:rgba(224,242,254,.45)}.bg-\[\#E5E0D5\]{--tw-bg-opacity:1;background-color:rgb(229 224 213/var(--tw-bg-opacity,1))}.bg-\[\#EAE4D7\]{--tw-bg-opacity:1;background-color:rgb(234 228 215/var(--tw-bg-opacity,1))}.bg-\[\#F3EFE6\]{--tw-bg-opacity:1;background-color:rgb(243 239 230/var(--tw-bg-opacity,1))}.bg-\[\#FAF7F2\]{--tw-bg-opacity:1;background-color:rgb(250 247 242/var(--tw-bg-opacity,1))}.bg-\[\#FEF3C7\]{--tw-bg-opacity:1;background-color:rgb(254 243 199/var(--tw-bg-opacity,1))}.bg-\[\#FEF3C7\]\/40{background-color:hsla(48,96%,89%,.4)}.bg-\[\#FEF3C7\]\/70{background-color:hsla(48,96%,89%,.7)}.bg-\[\#FFE4E6\]{--tw-bg-opacity:1;background-color:rgb(255 228 230/var(--tw-bg-opacity,1))}.bg-\[\#FFE4E6\]\/40{background-color:rgba(255,228,230,.4)}.bg-\[\#FFFDF9\]{--tw-bg-opacity:1;background-color:rgb(255 253 249/var(--tw-bg-opacity,1))}.bg-emerald-400{--tw-bg-opacity:1;background-color:rgb(52 211 153/var(--tw-bg-opacity,1))}.p-2{padding:.5rem}.p-3{padding:.75rem}.p-3\.5{padding:.875rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.px-1{padding-left:.25rem;padding-right:.25rem}.px-1\.5{padding-left:.375rem;padding-right:.375rem}.px-2{padding-left:.5rem;padding-right:.5rem}.px-2\.5{padding-left:.625rem;padding-right:.625rem}.px-3{padding-left:.75rem;padding-right:.75rem}.px-4{padding-left:1rem;padding-right:1rem}.py-0\.5{padding-top:.125rem;padding-bottom:.125rem}.py-1{padding-top:.25rem;padding-bottom:.25rem}.py-1\.5{padding-top:.375rem;padding-bottom:.375rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.py-2\.5{padding-top:.625rem;padding-bottom:.625rem}.py-3{padding-top:.75rem;padding-bottom:.75rem}.py-3\.5{padding-top:.875rem;padding-bottom:.875rem}.py-4{padding-top:1rem;padding-bottom:1rem}.py-5{padding-top:1.25rem;padding-bottom:1.25rem}.pb-2{padding-bottom:.5rem}.pb-2\.5{padding-bottom:.625rem}.pb-3{padding-bottom:.75rem}.pt-1{padding-top:.25rem}.pt-2{padding-top:.5rem}.pt-4{padding-top:1rem}.text-left{text-align:left}.text-center{text-align:center}.text-right{text-align:right}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-\[10px\]{font-size:10px}.text-\[11px\]{font-size:11px}.text-base{font-size:1rem;line-height:1.5rem}.text-sm{font-size:.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:.75rem;line-height:1rem}.font-bold{font-weight:700}.font-extrabold{font-weight:800}.font-medium{font-weight:500}.font-normal{font-weight:400}.font-semibold{font-weight:600}.leading-none{line-height:1}.leading-relaxed{line-height:1.625}.tracking-tight{letter-spacing:-.025em}.tracking-wide{letter-spacing:.025em}.tracking-wider{letter-spacing:.05em}.text-\[\#0369A1\]{--tw-text-opacity:1;color:rgb(3 105 161/var(--tw-text-opacity,1))}.text-\[\#075985\]{--tw-text-opacity:1;color:rgb(7 89 133/var(--tw-text-opacity,1))}.text-\[\#15803D\]{--tw-text-opacity:1;color:rgb(21 128 61/var(--tw-text-opacity,1))}.text-\[\#166534\]{--tw-text-opacity:1;color:rgb(22 101 52/var(--tw-text-opacity,1))}.text-\[\#1E2022\]{--tw-text-opacity:1;color:rgb(30 32 34/var(--tw-text-opacity,1))}.text-\[\#2E3134\]{--tw-text-opacity:1;color:rgb(46 49 52/var(--tw-text-opacity,1))}.text-\[\#45484B\]{--tw-text-opacity:1;color:rgb(69 72 75/var(--tw-text-opacity,1))}.text-\[\#5C5F62\]{--tw-text-opacity:1;color:rgb(92 95 98/var(--tw-text-opacity,1))}.text-\[\#85878A\]{--tw-text-opacity:1;color:rgb(133 135 138/var(--tw-text-opacity,1))}.text-\[\#92400E\]{--tw-text-opacity:1;color:rgb(146 64 14/var(--tw-text-opacity,1))}.text-\[\#9F1239\]{--tw-text-opacity:1;color:rgb(159 18 57/var(--tw-text-opacity,1))}.text-\[\#A8A6A1\]{--tw-text-opacity:1;color:rgb(168 166 161/var(--tw-text-opacity,1))}.text-\[\#B45309\]{--tw-text-opacity:1;color:rgb(180 83 9/var(--tw-text-opacity,1))}.text-\[\#BE123C\]{--tw-text-opacity:1;color:rgb(190 18 60/var(--tw-text-opacity,1))}.text-\[\#E5E0D5\]{--tw-text-opacity:1;color:rgb(229 224 213/var(--tw-text-opacity,1))}.text-\[\#EAE4D7\]{--tw-text-opacity:1;color:rgb(234 228 215/var(--tw-text-opacity,1))}.text-\[\#FAF7F2\]{--tw-text-opacity:1;color:rgb(250 247 242/var(--tw-text-opacity,1))}.text-\[\#FCD34D\]{--tw-text-opacity:1;color:rgb(252 211 77/var(--tw-text-opacity,1))}.underline{text-decoration-line:underline}.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.opacity-0{opacity:0}.opacity-75{opacity:.75}.shadow-lg{--tw-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color),0 4px 6px -4px var(--tw-shadow-color)}.shadow-lg,.shadow-md{box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color),0 2px 4px -2px var(--tw-shadow-color)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgba(0,0,0,.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.filter{filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,-webkit-backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter,-webkit-backdrop-filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.transition-colors{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.transition-opacity{transition-property:opacity;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.duration-200{transition-duration:.2s}.duration-300{transition-duration:.3s}.duration-500{transition-duration:.5s}.ease-in{transition-timing-function:cubic-bezier(.4,0,1,1)}.ease-in-out{transition-timing-function:cubic-bezier(.4,0,.2,1)}.ease-out{transition-timing-function:cubic-bezier(0,0,.2,1)}.hover\:bg-\[\#333639\]:hover{--tw-bg-opacity:1;background-color:rgb(51 54 57/var(--tw-bg-opacity,1))}.hover\:bg-\[\#DCFCE7\]:hover{--tw-bg-opacity:1;background-color:rgb(220 252 231/var(--tw-bg-opacity,1))}.hover\:bg-\[\#E5E0D5\]:hover{--tw-bg-opacity:1;background-color:rgb(229 224 213/var(--tw-bg-opacity,1))}.hover\:bg-\[\#EAE4D7\]:hover{--tw-bg-opacity:1;background-color:rgb(234 228 215/var(--tw-bg-opacity,1))}.hover\:bg-\[\#F3EFE6\]:hover{--tw-bg-opacity:1;background-color:rgb(243 239 230/var(--tw-bg-opacity,1))}.hover\:bg-\[\#FAF7F2\]:hover{--tw-bg-opacity:1;background-color:rgb(250 247 242/var(--tw-bg-opacity,1))}.hover\:bg-\[\#FEF3C7\]:hover{--tw-bg-opacity:1;background-color:rgb(254 243 199/var(--tw-bg-opacity,1))}.hover\:bg-\[\#FFE4E6\]:hover{--tw-bg-opacity:1;background-color:rgb(255 228 230/var(--tw-bg-opacity,1))}.hover\:text-\[\#1E2022\]:hover{--tw-text-opacity:1;color:rgb(30 32 34/var(--tw-text-opacity,1))}.hover\:text-\[\#FAF7F2\]:hover{--tw-text-opacity:1;color:rgb(250 247 242/var(--tw-text-opacity,1))}.focus\:border-\[\#1E2022\]:focus{--tw-border-opacity:1;border-color:rgb(30 32 34/var(--tw-border-opacity,1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.focus\:ring-\[\#1E2022\]:focus{--tw-ring-opacity:1;--tw-ring-color:rgb(30 32 34/var(--tw-ring-opacity,1))}@media (min-width:640px){.sm\:min-w-\[270px\]{min-width:270px}.sm\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.sm\:flex-row{flex-direction:row}.sm\:items-start{align-items:flex-start}.sm\:items-center{align-items:center}.sm\:p-5{padding:1.25rem}.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}.sm\:text-2xl{font-size:1.5rem;line-height:2rem}.sm\:text-base{font-size:1rem;line-height:1.5rem}.sm\:text-lg{font-size:1.125rem;line-height:1.75rem}.sm\:text-sm{font-size:.875rem;line-height:1.25rem}.sm\:text-xl{font-size:1.25rem;line-height:1.75rem}}@media (min-width:768px){.md\:col-span-4{grid-column:span 4/span 4}.md\:col-span-8{grid-column:span 8/span 8}.md\:grid-cols-12{grid-template-columns:repeat(12,minmax(0,1fr))}.md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.md\:flex-row{flex-direction:row}.md\:items-center{align-items:center}}@media (min-width:1024px){.lg\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.lg\:flex-row{flex-direction:row}.lg\:items-center{align-items:center}.lg\:items-end{align-items:flex-end}.lg\:justify-between{justify-content:space-between}}@media (min-width:1280px){.xl\:col-span-4{grid-column:span 4/span 4}.xl\:col-span-8{grid-column:span 8/span 8}.xl\:grid-cols-12{grid-template-columns:repeat(12,minmax(0,1fr))}}
@@ -85,6 +90,47 @@
     @media (prefers-reduced-motion: reduce) {
       .live-dot-pulse { animation: none; }
     }
+    /* 手機端小螢幕排版優化：釋放頂部可視區域、固定觀察名單首欄與縮小懸浮吉祥物 */
+    .wl-scroll-wrap {
+      -webkit-overflow-scrolling: touch;
+    }
+    @media (max-width: 767px) {
+      .wl-sticky-col {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background-color: #FFFDF9;
+        box-shadow: 2px 0 6px -2px rgba(30, 32, 34, 0.12);
+      }
+      .wl-sticky-head {
+        background-color: #F3EFE6;
+        z-index: 3;
+      }
+    }
+    @media (max-width: 640px) {
+      header.sticky {
+        position: static;
+      }
+      main {
+        padding-bottom: 5.5rem;
+      }
+      #toast {
+        left: 0.75rem;
+        bottom: 1rem;
+        max-width: calc(100vw - 6.5rem);
+      }
+      #mascotFloatingWrap {
+        right: 0.625rem;
+        bottom: 0.625rem;
+      }
+      #mascotBubble {
+        max-width: min(240px, calc(100vw - 2rem));
+      }
+      #pageMascotBtn {
+        width: 72px !important;
+        height: 72px !important;
+      }
+    }
   </style>
 </head>
 <body class="bg-[#FAF7F2] text-[#1E2022] antialiased min-h-screen flex flex-col">
@@ -149,8 +195,8 @@
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div class="space-y-1.5">
           <div class="flex flex-wrap items-center gap-2">
-            <span class="inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
-            <span class="text-xs font-semibold tracking-wide text-[#E5E0D5]">即時市場數據同步（Python 官方 API 直連 / AI 備援）</span>
+            <span id="syncBannerDot" class="inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
+            <span id="syncBannerHeading" class="text-xs font-semibold tracking-wide text-[#E5E0D5]">即時市場數據同步（Python 官方 API 直連 / AI 備援）</span>
             <span id="syncTimestamp" class="text-[11px] text-[#E5E0D5] bg-[#2D3033] border border-[#404448] px-2 py-0.5 rounded">籌碼基準：載入中</span>
             <span id="quoteTimestampBadge" aria-live="off" class="text-[11px] text-[#E5E0D5] bg-[#2D3033] border border-[#404448] px-2 py-0.5 rounded tabular-nums">報價：--</span>
             <span id="twiiBadge" aria-live="off" class="text-[11px] font-semibold px-2 py-0.5 rounded bg-[#2D3033] text-tw-flat-dark tabular-nums">加權 --</span>
@@ -340,7 +386,7 @@
         </div>
         <!-- 即時報價控制與分類篩選按鈕 -->
         <div class="flex flex-col items-start lg:items-end gap-2">
-          <div class="flex flex-wrap items-center gap-1.5">
+          <div id="rtControlActions" class="flex flex-wrap items-center gap-1.5">
             <span id="rtStatusPill" aria-live="off" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#F3EFE6] border border-[#D5CFC2] text-[11px] font-medium text-[#45484B] tabular-nums">
               <span id="rtStatusDot" class="inline-block w-2 h-2 rounded-full rt-dot-closed"></span>
               <span id="rtStatusText">即時股價待命</span>
@@ -385,12 +431,12 @@
       </div>
 
       <!-- 12 檔進場價位評估表格 -->
-      <div class="overflow-x-auto" tabindex="0" role="region" aria-labelledby="watchlistHeading">
+      <div class="overflow-x-auto wl-scroll-wrap" tabindex="0" role="region" aria-labelledby="watchlistHeading">
         <table class="w-full text-left border-collapse text-xs">
           <caption class="visually-hidden">12 檔監控個股即時股價、技術位階、預估本益比、殖利率、大戶籌碼與買點評估</caption>
           <thead>
             <tr class="border-b border-[#E5E0D5] bg-[#F3EFE6] text-[#5C5F62]">
-              <th scope="col" class="py-2 px-3 font-semibold">股號 / 股名</th>
+              <th scope="col" class="py-2 px-3 font-semibold wl-sticky-col wl-sticky-head">股號 / 股名</th>
               <th scope="col" class="py-2 px-3 font-semibold text-right">即時 / 最新股價</th>
               <th scope="col" class="py-2 px-3 font-semibold">技術位階與 52W</th>
               <th scope="col" class="py-2 px-3 font-semibold text-right">26E / 27E PE</th>
@@ -741,71 +787,71 @@
   <!-- 內嵌最新抓取的市場數據 JSON (由 Python server.py 自動同步更新) -->
   <script id="embedded-market-data" type="application/json">
 {
-  "fetchedAt": "2026-11-23 12:41:18",
+  "fetchedAt": "2026-11-24 10:08:41",
   "dateLabel": "2026/11/20 收盤",
   "dataDate": "2026-11-20",
-  "quoteDate": "2026-11-23",
-  "quoteTime": "12:41:16",
+  "quoteDate": "2026-11-24",
+  "quoteTime": "10:04:26",
   "marketStatus": "live",
   "marketStatusLabel": "盤中即時",
   "quoteSourceLabel": "鉅亨網即時",
-  "summary": "加權指數盤中 36,803 點（+770 點 / +2.14%），成交金額 9,353 億元（20日均量比 0.96x），外資台指期淨部位 -97,863 口、近 5 日現貨 -2,187 億元，散戶小台＋微台綜合多空比 +18.0%（純小台 -1.8%），台積電盤中 2040.0 元（月線 2259.0），大盤單日融資 -491.4 億元（維持率推算 132.7%），日線 K=20.6 / D=31.2。",
+  "summary": "加權指數盤中 40,126 點（+3314 點 / +9.00%），成交金額 11,137 億元（20日均量比 1.14x），外資台指期淨部位 -97,863 口、近 5 日現貨 -2,187 億元，散戶小台＋微台綜合多空比 +18.4%（純小台 -1.8%），台積電盤中 2230.0 元（月線 2249.8），大盤單日融資 -491.4 億元（維持率推算 143.9%），日線 K=31.5 / D=34.8。",
   "futuresNet": -97863,
   "futuresNetRaw": -97863,
   "spotNet5d": -2187,
   "spotNet5dRaw": -2187,
   "spotNet1d": -95.11,
   "trustNet5d": -84.7,
-  "retailMtxRatio": 18.0,
+  "retailMtxRatio": 18.4,
   "retailMtxOnlyRatio": -1.8,
-  "marginMaintenanceRatio": 132.7,
+  "marginMaintenanceRatio": 143.9,
   "marginBalanceBillion": 4352.27,
   "marginChange1dBillion": -491.41,
   "marginChange5dBillion": -1013.72,
-  "tsmcStatus": "14",
+  "tsmcStatus": "3",
   "financeStatus": "11",
   "marginStatus": "4",
   "whaleTrend": "6",
-  "kdStatus": "12",
-  "chkPanicVol": false,
+  "kdStatus": "8",
+  "chkPanicVol": true,
   "chkGovSupport": false,
   "chkDryVol": false,
   "metrics": {
-    "twiiClose": 36803.4,
-    "twiiChange": 770.11,
-    "twiiChangePct": 2.14,
-    "twii5dPct": -9.77,
-    "volumeBillion": 9353.1,
-    "avgVolume20dBillion": 9715.46,
-    "volumeRatio": 0.96,
+    "twiiClose": 40126.24,
+    "twiiChange": 3314.35,
+    "twiiChangePct": 9.0,
+    "twii5dPct": -2.17,
+    "volumeBillion": 11137.43,
+    "avgVolume20dBillion": 9805.61,
+    "volumeRatio": 1.14,
     "kd": {
-      "k": 20.56,
-      "d": 31.2,
+      "k": 31.46,
+      "d": 34.84,
       "prev_k": 22.1,
       "prev_d": 36.52
     },
     "tsmc": {
-      "close": 2040.0,
-      "change_pct": 2.0,
-      "ma5": 2098.0,
-      "ma10": 2207.5,
-      "ma20": 2259.0,
-      "ma60": 2388.5
+      "close": 2230.0,
+      "change_pct": 9.85,
+      "ma5": 2107.0,
+      "ma10": 2200.5,
+      "ma20": 2249.8,
+      "ma60": 2385.2
     },
     "finance": {
-      "close": 3132.67,
-      "change_1d_pct": -2.58,
-      "change_5d_pct": -13.41,
-      "ma20": 3600.62
+      "close": 3400.85,
+      "change_1d_pct": 5.76,
+      "change_5d_pct": -5.99,
+      "ma20": 3614.03
     },
     "taifex": {
       "txForeignNet": -97863,
       "mtxInstNet": 565,
-      "mtxTotalOi": 31483,
+      "mtxTotalOi": 31854,
       "tmfInstNet": -47192,
-      "tmfTotalOi": 89064,
+      "tmfTotalOi": 81216,
       "retailMtxOnlyRatio": -1.8,
-      "retailCombinedRatio": 18.0
+      "retailCombinedRatio": 18.4
     },
     "whaleStats": {
       "tdccDate": "20261120",
@@ -821,34 +867,34 @@
       "name": "技嘉",
       "sector": "AI 伺服器／板卡",
       "category": "attack",
-      "close": 253.0,
-      "change": 5.0,
-      "changePct": 2.02,
-      "prevClose": 248.0,
-      "pe2026E": 6.99,
-      "pe2027E": 6.55,
-      "yield2027E": 9.45,
-      "dist52LowPct": 22.5,
-      "rightConfirmPrice": 277.6,
-      "entryStatus": "watch_near",
-      "entryLabel": "估值偏低・接近買點",
-      "entryReason": "距左側試單上緣 250.0 元僅差 1.2%（或等站回 5/10 日線 277.6 元右側轉強再接）。",
-      "open": 243.0,
-      "high": 257.0,
-      "low": 242.5,
-      "volumeLots": 4786,
-      "quoteDate": "2026-11-23",
-      "quoteTime": "12:41:10",
+      "close": 278.0,
+      "change": 25.0,
+      "changePct": 9.88,
+      "prevClose": 253.0,
+      "pe2026E": 7.68,
+      "pe2027E": 7.2,
+      "yield2027E": 8.6,
+      "dist52LowPct": 34.6,
+      "rightConfirmPrice": 274.6,
+      "entryStatus": "buy_right",
+      "entryLabel": "右側買進確認",
+      "entryReason": "已站回 5/10 日均線（274.6 元），且 2027E 本益比 7.2 倍具性價比。",
+      "open": 278.0,
+      "high": 278.0,
+      "low": 278.0,
+      "volumeLots": 4574,
+      "quoteDate": "2026-11-24",
+      "quoteTime": "10:04:08",
       "quoteSource": "cnyes",
       "isRealtime": true,
       "ma5": 263.1,
-      "ma10": 277.6,
-      "ma20": 304.32,
+      "ma10": 274.6,
+      "ma20": 300.18,
       "kd": {
-        "k": 13.08,
-        "d": 12.41,
-        "prev_k": 8.6,
-        "prev_d": 12.07
+        "k": 26.58,
+        "d": 16.72,
+        "prev_k": 11.24,
+        "prev_d": 11.79
       },
       "div2027E": 23.9,
       "payoutPct": 65.9,
@@ -872,52 +918,52 @@
         "totalHolders": 98573,
         "totalHoldersDelta1w": null,
         "broker": {
-          "mainBuyLots": 6142,
-          "mainSellLots": 5505,
-          "mainNetLots": 637,
-          "topBuyer": "美商高盛",
-          "topBuyerLots": 2245,
-          "topSeller": "凱基",
-          "topSellerLots": 2531
+          "mainBuyLots": 1412,
+          "mainSellLots": 1720,
+          "mainNetLots": -308,
+          "topBuyer": "港商麥格理",
+          "topBuyerLots": 326,
+          "topSeller": "台灣摩根士丹利",
+          "topSellerLots": 745
         },
-        "chipSignal": "neutral",
-        "chipLabel": "4週大戶減・主力轉買"
+        "chipSignal": "dumping",
+        "chipLabel": "大戶倒貨／主力偏空"
       },
-      "price": 253.0
+      "price": 278.0
     },
     {
       "code": "2357",
       "name": "華碩",
       "sector": "品牌電腦／AI",
       "category": "attack",
-      "close": 758.0,
-      "change": 2.0,
-      "changePct": 0.26,
-      "prevClose": 756.0,
-      "pe2026E": 9.72,
-      "pe2027E": 10.02,
-      "yield2027E": 7.2,
-      "dist52LowPct": 54.7,
-      "rightConfirmPrice": 838.2,
-      "entryStatus": "watch_near",
-      "entryLabel": "估值偏低・接近買點",
-      "entryReason": "距左側試單上緣 745.0 元僅差 1.7%（或等站回 5/10 日線 838.2 元右側轉強再接）。",
-      "open": 750.0,
-      "high": 798.0,
-      "low": 748.0,
-      "volumeLots": 3645,
-      "quoteDate": "2026-11-23",
-      "quoteTime": "12:40:59",
+      "close": 816.0,
+      "change": 58.0,
+      "changePct": 7.65,
+      "prevClose": 758.0,
+      "pe2026E": 10.46,
+      "pe2027E": 10.78,
+      "yield2027E": 6.69,
+      "dist52LowPct": 66.5,
+      "rightConfirmPrice": 831.7,
+      "entryStatus": "wait",
+      "entryLabel": "價位未到・續等待",
+      "entryReason": "仍高於買進區間 745.0 元且未站穩短均線，建議耐心等待拉回買點或轉強訊號。",
+      "open": 830.0,
+      "high": 833.0,
+      "low": 813.0,
+      "volumeLots": 2811,
+      "quoteDate": "2026-11-24",
+      "quoteTime": "10:04:21",
       "quoteSource": "cnyes",
       "isRealtime": true,
-      "ma5": 797.6,
-      "ma10": 838.2,
-      "ma20": 872.85,
+      "ma5": 796.2,
+      "ma10": 831.7,
+      "ma20": 865.45,
       "kd": {
-        "k": 18.14,
-        "d": 29.28,
-        "prev_k": 21.58,
-        "prev_d": 34.85
+        "k": 26.95,
+        "d": 28.2,
+        "prev_k": 16.76,
+        "prev_d": 28.82
       },
       "div2027E": 54.6,
       "payoutPct": 70.0,
@@ -941,52 +987,52 @@
         "totalHolders": 110603,
         "totalHoldersDelta1w": null,
         "broker": {
-          "mainBuyLots": 1907,
-          "mainSellLots": 1907,
-          "mainNetLots": 0,
-          "topBuyer": "元大證券",
-          "topBuyerLots": 319,
-          "topSeller": "台灣摩根士丹利",
-          "topSellerLots": 1062
+          "mainBuyLots": 2050,
+          "mainSellLots": 2075,
+          "mainNetLots": -25,
+          "topBuyer": "台灣摩根士丹利",
+          "topBuyerLots": 872,
+          "topSeller": "港商麥格理",
+          "topSellerLots": 485
         },
-        "chipSignal": "neutral",
-        "chipLabel": "籌碼拉鋸換手"
+        "chipSignal": "dumping",
+        "chipLabel": "大戶倒貨／主力偏空"
       },
-      "price": 758.0
+      "price": 816.0
     },
     {
       "code": "2881",
       "name": "富邦金",
       "sector": "金融控股",
       "category": "defense",
-      "close": 130.0,
-      "change": -6.5,
-      "changePct": -4.76,
-      "prevClose": 136.5,
-      "pe2026E": 11.78,
-      "pe2027E": 12.71,
-      "yield2027E": 4.31,
-      "dist52LowPct": 55.7,
-      "rightConfirmPrice": 149.9,
-      "entryStatus": "buy_left",
-      "entryLabel": "達左側首波試單價",
-      "entryReason": "進入合理買進區間（122.0~132.0 元），前瞻 PE 12.71 倍，適合小額分批建立第 1 批底倉。",
-      "open": 134.0,
-      "high": 134.5,
-      "low": 125.0,
-      "volumeLots": 33639,
-      "quoteDate": "2026-11-23",
-      "quoteTime": "12:41:14",
+      "close": 142.5,
+      "change": 12.0,
+      "changePct": 9.2,
+      "prevClose": 130.5,
+      "pe2026E": 12.91,
+      "pe2027E": 13.93,
+      "yield2027E": 3.93,
+      "dist52LowPct": 70.7,
+      "rightConfirmPrice": 148.9,
+      "entryStatus": "wait",
+      "entryLabel": "價位未到・續等待",
+      "entryReason": "仍高於買進區間 132.0 元且未站穩短均線，建議耐心等待拉回買點或轉強訊號。",
+      "open": 143.5,
+      "high": 143.5,
+      "low": 141.5,
+      "volumeLots": 20795,
+      "quoteDate": "2026-11-24",
+      "quoteTime": "10:04:25",
       "quoteSource": "cnyes",
       "isRealtime": true,
-      "ma5": 142.9,
-      "ma10": 149.95,
-      "ma20": 153.55,
+      "ma5": 141.4,
+      "ma10": 148.95,
+      "ma20": 152.6,
       "kd": {
-        "k": 26.08,
-        "d": 39.73,
-        "prev_k": 31.98,
-        "prev_d": 46.55
+        "k": 32.97,
+        "d": 37.47,
+        "prev_k": 26.08,
+        "prev_d": 39.73
       },
       "div2027E": 5.6,
       "payoutPct": 50.8,
@@ -1010,52 +1056,52 @@
         "totalHolders": 379038,
         "totalHoldersDelta1w": null,
         "broker": {
-          "mainBuyLots": 10604,
-          "mainSellLots": 11013,
-          "mainNetLots": -409,
-          "topBuyer": "美商高盛",
-          "topBuyerLots": 1725,
-          "topSeller": "美林",
-          "topSellerLots": 2823
+          "mainBuyLots": 12360,
+          "mainSellLots": 14313,
+          "mainNetLots": -1953,
+          "topBuyer": "新加坡商瑞銀",
+          "topBuyerLots": 3035,
+          "topSeller": "凱基",
+          "topSellerLots": 2938
         },
         "chipSignal": "neutral",
         "chipLabel": "籌碼拉鋸換手"
       },
-      "price": 130.0
+      "price": 142.5
     },
     {
       "code": "3231",
       "name": "緯創",
       "sector": "AI 伺服器代工",
       "category": "attack",
-      "close": 148.5,
-      "change": 1.5,
-      "changePct": 1.02,
-      "prevClose": 147.0,
-      "pe2026E": 7.83,
-      "pe2027E": 5.03,
-      "yield2027E": 7.74,
-      "dist52LowPct": 21.2,
-      "rightConfirmPrice": 161.7,
-      "entryStatus": "watch_near",
-      "entryLabel": "估值偏低・接近買點",
-      "entryReason": "距左側試單上緣 148.0 元僅差 0.3%（或等站回 5/10 日線 161.7 元右側轉強再接）。",
-      "open": 144.0,
-      "high": 154.0,
-      "low": 143.0,
-      "volumeLots": 26274,
-      "quoteDate": "2026-11-23",
-      "quoteTime": "12:41:10",
+      "close": 163.0,
+      "change": 14.5,
+      "changePct": 9.76,
+      "prevClose": 148.5,
+      "pe2026E": 8.59,
+      "pe2027E": 5.52,
+      "yield2027E": 7.06,
+      "dist52LowPct": 33.1,
+      "rightConfirmPrice": 160.8,
+      "entryStatus": "buy_right",
+      "entryLabel": "右側買進確認",
+      "entryReason": "已站回 5/10 日均線（160.8 元），且 2027E 本益比 5.52 倍具性價比。",
+      "open": 163.0,
+      "high": 163.0,
+      "low": 163.0,
+      "volumeLots": 7349,
+      "quoteDate": "2026-11-24",
+      "quoteTime": "10:03:11",
       "quoteSource": "cnyes",
       "isRealtime": true,
-      "ma5": 154.3,
-      "ma10": 161.7,
-      "ma20": 170.25,
+      "ma5": 155.3,
+      "ma10": 160.8,
+      "ma20": 168.82,
       "kd": {
-        "k": 18.75,
-        "d": 25.87,
-        "prev_k": 19.57,
-        "prev_d": 29.44
+        "k": 29.46,
+        "d": 26.87,
+        "prev_k": 17.87,
+        "prev_d": 25.58
       },
       "div2027E": 11.5,
       "payoutPct": 60.8,
@@ -1079,52 +1125,52 @@
         "totalHolders": 342430,
         "totalHoldersDelta1w": null,
         "broker": {
-          "mainBuyLots": 10400,
-          "mainSellLots": 9423,
-          "mainNetLots": 977,
-          "topBuyer": "美商高盛",
-          "topBuyerLots": 2230,
-          "topSeller": "台灣摩根士丹利",
-          "topSellerLots": 2840
+          "mainBuyLots": 6788,
+          "mainSellLots": 7582,
+          "mainNetLots": -794,
+          "topBuyer": "台灣摩根士丹利",
+          "topBuyerLots": 1947,
+          "topSeller": "凱基-士林",
+          "topSellerLots": 2982
         },
-        "chipSignal": "neutral",
-        "chipLabel": "4週大戶減・主力轉買"
+        "chipSignal": "dumping",
+        "chipLabel": "大戶倒貨／主力偏空"
       },
-      "price": 148.5
+      "price": 163.0
     },
     {
       "code": "2382",
       "name": "廣達",
       "sector": "AI 伺服器代工",
       "category": "attack",
-      "close": 257.0,
-      "change": 5.0,
-      "changePct": 1.98,
-      "prevClose": 252.0,
-      "pe2026E": 9.72,
-      "pe2027E": 8.13,
-      "yield2027E": 8.25,
-      "dist52LowPct": 3.8,
-      "rightConfirmPrice": 271.7,
-      "entryStatus": "buy_left",
-      "entryLabel": "達左側首波試單價",
-      "entryReason": "進入合理買進區間（240.0~258.0 元），前瞻 PE 8.13 倍，適合小額分批建立第 1 批底倉。",
-      "open": 253.5,
-      "high": 260.5,
-      "low": 249.5,
-      "volumeLots": 10897,
-      "quoteDate": "2026-11-23",
-      "quoteTime": "12:41:13",
+      "close": 278.0,
+      "change": 21.0,
+      "changePct": 8.17,
+      "prevClose": 257.0,
+      "pe2026E": 10.51,
+      "pe2027E": 8.79,
+      "yield2027E": 7.63,
+      "dist52LowPct": 12.3,
+      "rightConfirmPrice": 269.6,
+      "entryStatus": "buy_right",
+      "entryLabel": "右側買進確認",
+      "entryReason": "已站回 5/10 日均線（269.6 元），且 2027E 本益比 8.79 倍具性價比。",
+      "open": 281.5,
+      "high": 282.5,
+      "low": 276.0,
+      "volumeLots": 12029,
+      "quoteDate": "2026-11-24",
+      "quoteTime": "10:04:24",
       "quoteSource": "cnyes",
       "isRealtime": true,
-      "ma5": 260.2,
-      "ma10": 271.7,
-      "ma20": 291.48,
+      "ma5": 263.3,
+      "ma10": 269.65,
+      "ma20": 289.0,
       "kd": {
-        "k": 17.42,
-        "d": 18.13,
-        "prev_k": 15.07,
-        "prev_d": 18.49
+        "k": 33.1,
+        "d": 22.84,
+        "prev_k": 16.14,
+        "prev_d": 17.71
       },
       "div2027E": 21.2,
       "payoutPct": 80.2,
@@ -1148,52 +1194,52 @@
         "totalHolders": 285665,
         "totalHoldersDelta1w": null,
         "broker": {
-          "mainBuyLots": 5159,
-          "mainSellLots": 3708,
-          "mainNetLots": 1451,
-          "topBuyer": "元大證券",
-          "topBuyerLots": 1242,
-          "topSeller": "台灣摩根士丹利",
-          "topSellerLots": 1176
+          "mainBuyLots": 4847,
+          "mainSellLots": 4276,
+          "mainNetLots": 571,
+          "topBuyer": "群益金鼎",
+          "topBuyerLots": 865,
+          "topSeller": "摩根大通",
+          "topSellerLots": 995
         },
         "chipSignal": "neutral",
         "chipLabel": "4週大戶減・主力轉買"
       },
-      "price": 257.0
+      "price": 278.0
     },
     {
       "code": "2385",
       "name": "群光",
       "sector": "電子零組件",
       "category": "defense",
-      "close": 89.6,
-      "change": 4.7,
-      "changePct": 5.54,
-      "prevClose": 84.9,
-      "pe2026E": 11.26,
-      "pe2027E": 12.6,
-      "yield2027E": 7.03,
-      "dist52LowPct": 6.7,
-      "rightConfirmPrice": 88.3,
+      "close": 95.5,
+      "change": 5.4,
+      "changePct": 5.99,
+      "prevClose": 90.1,
+      "pe2026E": 12.0,
+      "pe2027E": 13.43,
+      "yield2027E": 6.6,
+      "dist52LowPct": 13.7,
+      "rightConfirmPrice": 89.2,
       "entryStatus": "buy_right",
       "entryLabel": "右側買進確認",
-      "entryReason": "已站回 5/10 日均線（88.3 元），且 2027E 本益比 12.6 倍具性價比。",
-      "open": 85.3,
-      "high": 90.4,
-      "low": 84.2,
-      "volumeLots": 3057,
-      "quoteDate": "2026-11-23",
-      "quoteTime": "12:41:06",
+      "entryReason": "已站回 5/10 日均線（89.2 元），且 2027E 本益比 13.43 倍具性價比。",
+      "open": 95.7,
+      "high": 96.4,
+      "low": 93.6,
+      "volumeLots": 2580,
+      "quoteDate": "2026-11-24",
+      "quoteTime": "10:04:23",
       "quoteSource": "cnyes",
       "isRealtime": true,
-      "ma5": 87.5,
-      "ma10": 88.27,
-      "ma20": 92.24,
+      "ma5": 89.16,
+      "ma10": 89.09,
+      "ma20": 91.87,
       "kd": {
-        "k": 33.49,
-        "d": 26.46,
-        "prev_k": 18.99,
-        "prev_d": 22.95
+        "k": 54.55,
+        "d": 35.9,
+        "prev_k": 33.84,
+        "prev_d": 26.58
       },
       "div2027E": 6.3,
       "payoutPct": 79.6,
@@ -1217,52 +1263,52 @@
         "totalHolders": 50758,
         "totalHoldersDelta1w": null,
         "broker": {
-          "mainBuyLots": 2774,
-          "mainSellLots": 2666,
-          "mainNetLots": 108,
-          "topBuyer": "港商野村",
-          "topBuyerLots": 1500,
+          "mainBuyLots": 1736,
+          "mainSellLots": 1081,
+          "mainNetLots": 655,
+          "topBuyer": "富邦證券",
+          "topBuyerLots": 360,
           "topSeller": "台灣摩根士丹利",
-          "topSellerLots": 679
+          "topSellerLots": 204
         },
         "chipSignal": "neutral",
         "chipLabel": "籌碼拉鋸換手"
       },
-      "price": 89.6
+      "price": 95.5
     },
     {
       "code": "2882",
       "name": "國泰金",
       "sector": "金融控股",
       "category": "defense",
-      "close": 94.8,
-      "change": -2.1,
-      "changePct": -2.17,
-      "prevClose": 96.9,
-      "pe2026E": 10.51,
-      "pe2027E": 10.86,
-      "yield2027E": 4.75,
-      "dist52LowPct": 49.1,
-      "rightConfirmPrice": 107.5,
-      "entryStatus": "watch_near",
-      "entryLabel": "估值偏低・接近買點",
-      "entryReason": "距左側試單上緣 94.0 元僅差 0.9%（或等站回 5/10 日線 107.5 元右側轉強再接）。",
-      "open": 97.3,
-      "high": 97.5,
-      "low": 91.5,
-      "volumeLots": 35451,
-      "quoteDate": "2026-11-23",
-      "quoteTime": "12:41:16",
+      "close": 103.0,
+      "change": 8.0,
+      "changePct": 8.42,
+      "prevClose": 95.0,
+      "pe2026E": 11.42,
+      "pe2027E": 11.8,
+      "yield2027E": 4.37,
+      "dist52LowPct": 61.9,
+      "rightConfirmPrice": 106.9,
+      "entryStatus": "wait",
+      "entryLabel": "價位未到・續等待",
+      "entryReason": "仍高於買進區間 94.0 元且未站穩短均線，建議耐心等待拉回買點或轉強訊號。",
+      "open": 104.0,
+      "high": 104.5,
+      "low": 102.0,
+      "volumeLots": 18305,
+      "quoteDate": "2026-11-24",
+      "quoteTime": "10:04:23",
       "quoteSource": "cnyes",
       "isRealtime": true,
-      "ma5": 103.2,
-      "ma10": 107.55,
-      "ma20": 110.33,
+      "ma5": 101.78,
+      "ma10": 106.94,
+      "ma20": 109.82,
       "kd": {
-        "k": 26.43,
-        "d": 41.97,
-        "prev_k": 33.19,
-        "prev_d": 49.73
+        "k": 34.66,
+        "d": 39.65,
+        "prev_k": 26.99,
+        "prev_d": 42.15
       },
       "div2027E": 4.5,
       "payoutPct": 49.4,
@@ -1286,52 +1332,52 @@
         "totalHolders": 395142,
         "totalHoldersDelta1w": null,
         "broker": {
-          "mainBuyLots": 12309,
-          "mainSellLots": 13271,
-          "mainNetLots": -962,
-          "topBuyer": "元大證券",
-          "topBuyerLots": 3240,
+          "mainBuyLots": 18822,
+          "mainSellLots": 21330,
+          "mainNetLots": -2508,
+          "topBuyer": "新加坡商瑞銀",
+          "topBuyerLots": 4061,
           "topSeller": "國泰證券",
-          "topSellerLots": 9806
+          "topSellerLots": 15842
         },
         "chipSignal": "neutral",
         "chipLabel": "籌碼拉鋸換手"
       },
-      "price": 94.8
+      "price": 103.0
     },
     {
       "code": "6669",
       "name": "緯穎",
       "sector": "雲端資料中心",
       "category": "attack",
-      "close": 1365.0,
-      "change": 40.0,
-      "changePct": 3.02,
-      "prevClose": 1325.0,
-      "pe2026E": 10.05,
-      "pe2027E": 6.78,
-      "yield2027E": 5.22,
-      "dist52LowPct": 23.8,
-      "rightConfirmPrice": 1512.0,
-      "entryStatus": "watch_near",
-      "entryLabel": "估值偏低・接近買點",
-      "entryReason": "距左側試單上緣 1300.0 元僅差 5.0%（或等站回 5/10 日線 1512.0 元右側轉強再接）。",
-      "open": 1300.0,
-      "high": 1410.0,
-      "low": 1275.0,
-      "volumeLots": 4494,
-      "quoteDate": "2026-11-23",
-      "quoteTime": "12:41:10",
+      "close": 1510.0,
+      "change": 135.0,
+      "changePct": 9.82,
+      "prevClose": 1375.0,
+      "pe2026E": 11.12,
+      "pe2027E": 7.5,
+      "yield2027E": 4.72,
+      "dist52LowPct": 36.9,
+      "rightConfirmPrice": 1494.5,
+      "entryStatus": "buy_right",
+      "entryLabel": "右側買進確認",
+      "entryReason": "已站回 5/10 日均線（1494.5 元），且 2027E 本益比 7.5 倍具性價比。",
+      "open": 1510.0,
+      "high": 1510.0,
+      "low": 1510.0,
+      "volumeLots": 508,
+      "quoteDate": "2026-11-24",
+      "quoteTime": "10:01:14",
       "quoteSource": "cnyes",
       "isRealtime": true,
-      "ma5": 1408.0,
-      "ma10": 1512.0,
-      "ma20": 1647.0,
+      "ma5": 1419.0,
+      "ma10": 1494.5,
+      "ma20": 1624.75,
       "kd": {
-        "k": 16.64,
-        "d": 17.89,
-        "prev_k": 13.03,
-        "prev_d": 18.51
+        "k": 28.65,
+        "d": 21.39,
+        "prev_k": 16.27,
+        "prev_d": 17.76
       },
       "div2027E": 71.3,
       "payoutPct": 52.5,
@@ -1355,52 +1401,52 @@
         "totalHolders": 225099,
         "totalHoldersDelta1w": null,
         "broker": {
-          "mainBuyLots": 1647,
-          "mainSellLots": 911,
-          "mainNetLots": 736,
+          "mainBuyLots": 985,
+          "mainSellLots": 1074,
+          "mainNetLots": -89,
           "topBuyer": "美商高盛",
-          "topBuyerLots": 610,
-          "topSeller": "摩根大通",
-          "topSellerLots": 213
+          "topBuyerLots": 320,
+          "topSeller": "新加坡商瑞銀",
+          "topSellerLots": 314
         },
-        "chipSignal": "accumulating",
-        "chipLabel": "大戶吸籌／主力偏多"
+        "chipSignal": "neutral",
+        "chipLabel": "籌碼拉鋸換手"
       },
-      "price": 1365.0
+      "price": 1510.0
     },
     {
       "code": "3034",
       "name": "聯詠",
       "sector": "IC 設計",
       "category": "defense",
-      "close": 427.5,
-      "change": 11.0,
-      "changePct": 2.64,
-      "prevClose": 416.5,
-      "pe2026E": 13.25,
-      "pe2027E": 12.06,
-      "yield2027E": 6.46,
-      "dist52LowPct": 21.4,
-      "rightConfirmPrice": 454.5,
-      "entryStatus": "watch_near",
-      "entryLabel": "估值偏低・接近買點",
-      "entryReason": "距左側試單上緣 408.0 元僅差 4.8%（或等站回 5/10 日線 454.5 元右側轉強再接）。",
-      "open": 419.0,
-      "high": 437.5,
-      "low": 416.0,
-      "volumeLots": 2257,
-      "quoteDate": "2026-11-23",
-      "quoteTime": "12:41:10",
+      "close": 447.0,
+      "change": 16.0,
+      "changePct": 3.71,
+      "prevClose": 431.0,
+      "pe2026E": 13.86,
+      "pe2027E": 12.61,
+      "yield2027E": 6.17,
+      "dist52LowPct": 27.0,
+      "rightConfirmPrice": 451.5,
+      "entryStatus": "wait",
+      "entryLabel": "價位未到・續等待",
+      "entryReason": "仍高於買進區間 408.0 元且未站穩短均線，建議耐心等待拉回買點或轉強訊號。",
+      "open": 469.0,
+      "high": 469.0,
+      "low": 444.5,
+      "volumeLots": 4588,
+      "quoteDate": "2026-11-24",
+      "quoteTime": "10:04:26",
       "quoteSource": "cnyes",
       "isRealtime": true,
-      "ma5": 439.9,
-      "ma10": 454.5,
-      "ma20": 503.2,
+      "ma5": 438.2,
+      "ma10": 451.5,
+      "ma20": 495.62,
       "kd": {
-        "k": 17.21,
-        "d": 14.74,
-        "prev_k": 11.43,
-        "prev_d": 13.51
+        "k": 27.81,
+        "d": 18.95,
+        "prev_k": 16.55,
+        "prev_d": 14.52
       },
       "div2027E": 27.6,
       "payoutPct": 85.6,
@@ -1424,52 +1470,52 @@
         "totalHolders": 84743,
         "totalHoldersDelta1w": null,
         "broker": {
-          "mainBuyLots": 1450,
-          "mainSellLots": 1394,
-          "mainNetLots": 56,
-          "topBuyer": "美林",
-          "topBuyerLots": 536,
-          "topSeller": "台灣摩根士丹利",
-          "topSellerLots": 709
+          "mainBuyLots": 1472,
+          "mainSellLots": 1359,
+          "mainNetLots": 113,
+          "topBuyer": "摩根大通",
+          "topBuyerLots": 354,
+          "topSeller": "富邦證券",
+          "topSellerLots": 345
         },
         "chipSignal": "neutral",
         "chipLabel": "籌碼拉鋸換手"
       },
-      "price": 427.5
+      "price": 447.0
     },
     {
       "code": "2317",
       "name": "鴻海",
       "sector": "AI 伺服器／代工",
       "category": "attack",
-      "close": 206.5,
-      "change": -3.5,
-      "changePct": -1.67,
-      "prevClose": 210.0,
-      "pe2026E": 10.64,
-      "pe2027E": 8.26,
-      "yield2027E": 4.99,
-      "dist52LowPct": 10.1,
-      "rightConfirmPrice": 226.3,
-      "entryStatus": "watch_near",
-      "entryLabel": "估值偏低・接近買點",
-      "entryReason": "距左側試單上緣 206.0 元僅差 0.2%（或等站回 5/10 日線 226.3 元右側轉強再接）。",
-      "open": 205.0,
-      "high": 214.5,
-      "low": 205.0,
-      "volumeLots": 60918,
-      "quoteDate": "2026-11-23",
-      "quoteTime": "12:41:15",
+      "close": 226.5,
+      "change": 20.5,
+      "changePct": 9.95,
+      "prevClose": 206.0,
+      "pe2026E": 11.67,
+      "pe2027E": 9.06,
+      "yield2027E": 4.55,
+      "dist52LowPct": 20.8,
+      "rightConfirmPrice": 224.4,
+      "entryStatus": "buy_right",
+      "entryLabel": "右側買進確認",
+      "entryReason": "已站回 5/10 日均線（224.4 元），且 2027E 本益比 9.06 倍具性價比。",
+      "open": 226.5,
+      "high": 226.5,
+      "low": 226.5,
+      "volumeLots": 13789,
+      "quoteDate": "2026-11-24",
+      "quoteTime": "10:04:23",
       "quoteSource": "cnyes",
       "isRealtime": true,
-      "ma5": 216.0,
-      "ma10": 226.3,
-      "ma20": 234.53,
+      "ma5": 216.8,
+      "ma10": 224.45,
+      "ma20": 233.3,
       "kd": {
-        "k": 17.67,
-        "d": 28.25,
-        "prev_k": 20.88,
-        "prev_d": 33.55
+        "k": 27.75,
+        "d": 27.44,
+        "prev_k": 14.75,
+        "prev_d": 27.28
       },
       "div2027E": 10.3,
       "payoutPct": 52.9,
@@ -1493,52 +1539,52 @@
         "totalHolders": 1139408,
         "totalHoldersDelta1w": null,
         "broker": {
-          "mainBuyLots": 12087,
-          "mainSellLots": 16898,
-          "mainNetLots": -4811,
-          "topBuyer": "元大證券",
-          "topBuyerLots": 2678,
+          "mainBuyLots": 18338,
+          "mainSellLots": 30194,
+          "mainNetLots": -11856,
+          "topBuyer": "新加坡商瑞銀",
+          "topBuyerLots": 8946,
           "topSeller": "台灣摩根士丹利",
-          "topSellerLots": 10416
+          "topSellerLots": 10769
         },
         "chipSignal": "neutral",
         "chipLabel": "4週增・短線主力調節"
       },
-      "price": 206.5
+      "price": 226.5
     },
     {
       "code": "2330",
       "name": "台積電",
       "sector": "晶圓代工龍頭",
       "category": "attack",
-      "close": 2040.0,
-      "change": 40.0,
-      "changePct": 2.0,
-      "prevClose": 2000.0,
-      "pe2026E": 18.68,
-      "pe2027E": 14.0,
-      "yield2027E": 1.76,
-      "dist52LowPct": 48.4,
-      "rightConfirmPrice": 2207.5,
-      "entryStatus": "watch_near",
-      "entryLabel": "估值偏低・接近買點",
-      "entryReason": "距左側試單上緣 2010.0 元僅差 1.5%（或等站回 5/10 日線 2207.5 元右側轉強再接）。",
-      "open": 1990.0,
-      "high": 2050.0,
-      "low": 1970.0,
-      "volumeLots": 54063,
-      "quoteDate": "2026-11-23",
-      "quoteTime": "12:41:15",
+      "close": 2230.0,
+      "change": 200.0,
+      "changePct": 9.85,
+      "prevClose": 2030.0,
+      "pe2026E": 20.42,
+      "pe2027E": 15.31,
+      "yield2027E": 1.61,
+      "dist52LowPct": 62.2,
+      "rightConfirmPrice": 2200.5,
+      "entryStatus": "wait",
+      "entryLabel": "價位未到・續等待",
+      "entryReason": "仍高於買進區間 2010.0 元且未站穩短均線，建議耐心等待拉回買點或轉強訊號。",
+      "open": 2230.0,
+      "high": 2230.0,
+      "low": 2230.0,
+      "volumeLots": 6559,
+      "quoteDate": "2026-11-24",
+      "quoteTime": "10:03:53",
       "quoteSource": "cnyes",
       "isRealtime": true,
-      "ma5": 2098.0,
-      "ma10": 2207.5,
-      "ma20": 2259.0,
+      "ma5": 2107.0,
+      "ma10": 2200.5,
+      "ma20": 2249.75,
       "kd": {
-        "k": 23.78,
-        "d": 36.43,
-        "prev_k": 26.85,
-        "prev_d": 42.75
+        "k": 35.46,
+        "d": 35.84,
+        "prev_k": 22.6,
+        "prev_d": 36.03
       },
       "div2027E": 36.0,
       "payoutPct": 33.2,
@@ -1562,52 +1608,52 @@
         "totalHolders": 3329043,
         "totalHoldersDelta1w": null,
         "broker": {
-          "mainBuyLots": 19409,
-          "mainSellLots": 23749,
-          "mainNetLots": -4340,
+          "mainBuyLots": 17043,
+          "mainSellLots": 18201,
+          "mainNetLots": -1158,
           "topBuyer": "臺銀",
-          "topBuyerLots": 6877,
-          "topSeller": "富邦證券",
-          "topSellerLots": 5143
+          "topBuyerLots": 4977,
+          "topSeller": "港商野村",
+          "topSellerLots": 4491
         },
         "chipSignal": "dumping",
         "chipLabel": "大戶倒貨／主力偏空"
       },
-      "price": 2040.0
+      "price": 2230.0
     },
     {
       "code": "5871",
       "name": "中租-KY",
       "sector": "租賃金融／綠能",
       "category": "defense",
-      "close": 96.5,
-      "change": 2.5,
-      "changePct": 2.66,
-      "prevClose": 94.0,
-      "pe2026E": 8.32,
-      "pe2027E": 8.04,
-      "yield2027E": 6.22,
-      "dist52LowPct": 2.9,
-      "rightConfirmPrice": 100.3,
-      "entryStatus": "buy_left",
-      "entryLabel": "達左側首波試單價",
-      "entryReason": "逼近 52 週低點 93.8 元（僅差 2.9%），2027E PE 8.04 倍、殖利率 6.2%，可左側試單。",
-      "open": 94.4,
-      "high": 98.9,
-      "low": 94.4,
-      "volumeLots": 12699,
-      "quoteDate": "2026-11-23",
-      "quoteTime": "12:41:14",
+      "close": 101.0,
+      "change": 4.4,
+      "changePct": 4.55,
+      "prevClose": 96.6,
+      "pe2026E": 8.71,
+      "pe2027E": 8.42,
+      "yield2027E": 5.94,
+      "dist52LowPct": 7.7,
+      "rightConfirmPrice": 100.0,
+      "entryStatus": "buy_right",
+      "entryLabel": "右側買進確認",
+      "entryReason": "已站回 5/10 日均線（100.0 元），且 2027E 本益比 8.42 倍具性價比。",
+      "open": 100.0,
+      "high": 102.0,
+      "low": 99.6,
+      "volumeLots": 4096,
+      "quoteDate": "2026-11-24",
+      "quoteTime": "10:04:19",
       "quoteSource": "cnyes",
       "isRealtime": true,
-      "ma5": 97.52,
-      "ma10": 100.26,
-      "ma20": 102.71,
+      "ma5": 97.98,
+      "ma10": 99.98,
+      "ma20": 102.32,
       "kd": {
-        "k": 19.98,
-        "d": 25.69,
-        "prev_k": 17.27,
-        "prev_d": 28.55
+        "k": 31.86,
+        "d": 27.57,
+        "prev_k": 19.16,
+        "prev_d": 25.42
       },
       "div2027E": 6.0,
       "payoutPct": 51.6,
@@ -1631,25 +1677,25 @@
         "totalHolders": 115679,
         "totalHoldersDelta1w": null,
         "broker": {
-          "mainBuyLots": 4800,
-          "mainSellLots": 9794,
-          "mainNetLots": -4994,
-          "topBuyer": "凱基-台北",
-          "topBuyerLots": 1003,
-          "topSeller": "國泰證券",
-          "topSellerLots": 3996
+          "mainBuyLots": 10354,
+          "mainSellLots": 8482,
+          "mainNetLots": 1872,
+          "topBuyer": "摩根大通",
+          "topBuyerLots": 2946,
+          "topSeller": "富邦證券",
+          "topSellerLots": 4618
         },
-        "chipSignal": "dumping",
-        "chipLabel": "大戶倒貨／主力偏空"
+        "chipSignal": "neutral",
+        "chipLabel": "籌碼拉鋸換手"
       },
-      "price": 96.5
+      "price": 101.0
     }
   ],
   "watchlistSummary": {
     "total": 12,
-    "buyReady": 4,
-    "watchNear": 8,
-    "wait": 0
+    "buyReady": 7,
+    "watchNear": 0,
+    "wait": 5
   },
   "sources": [
     {
@@ -1702,6 +1748,12 @@
       allocMax: 50,
       allocMid: 40
     };
+
+    function isStaticSiteMode() {
+      if (document.documentElement.dataset.staticSite === 'true') return true;
+      const host = (window.location.hostname || '').toLowerCase();
+      return host.endsWith('.github.io');
+    }
 
     function getApiBase() {
       return window.location.protocol.startsWith('http') ? '' : 'http://127.0.0.1:8765';
@@ -2233,10 +2285,12 @@
       let synced = false;
       let timedOut = false;
 
-      // 通道一：優先嘗試本機 Python API 伺服器
-      const apiEndpoints = window.location.protocol.startsWith('http')
-        ? ['/api/sync']
-        : ['http://127.0.0.1:8765/api/sync'];
+      // 通道一：優先嘗試本機 Python API 伺服器（雲端靜態託管頁略過無效 /api/sync 請求）
+      const apiEndpoints = isStaticSiteMode()
+        ? []
+        : (window.location.protocol.startsWith('http')
+          ? ['/api/sync']
+          : ['http://127.0.0.1:8765/api/sync']);
 
       for (const endpoint of apiEndpoints) {
         let timer = null;
@@ -2284,6 +2338,8 @@
           }
         } else if (timedOut) {
           showToast('同步逾時（超過 65 秒），官方資料源回應較慢，請稍後再試或查看終端機進度');
+        } else if (isStaticSiteMode()) {
+          showToast('雲端靜態版由每日盤後排程自動更新；若需手動同步，請於「同步設定」填入 Gemini Key 或改用電腦版');
         } else {
           showToast('未偵測到本機 Python 伺服器：請雙擊 start_dashboard.bat，或於右上角「同步設定」填入 Gemini Key');
         }
@@ -2555,6 +2611,12 @@
     }
 
     async function checkBackendHealth() {
+      if (isStaticSiteMode()) {
+        backendStatus = { ok: false, realtimeSupported: false };
+        updateConnBadge(false, false);
+        updateRealtimeBannerUI();
+        return { ok: false, syncing: false, realtimeSupported: false, fetchedAt: null, lastError: null };
+      }
       const url = `${getApiBase()}/api/health`;
       try {
         const resp = await fetch(url, { signal: AbortSignal.timeout(1500) });
@@ -2587,6 +2649,15 @@
 
     function updateConnBadge(online, syncing = false) {
       const badge = document.getElementById('connModeBadge');
+      const syncHeading = document.getElementById('syncBannerHeading');
+      if (isStaticSiteMode()) {
+        badge.textContent = '雲端靜態版（每日盤後自動更新）';
+        badge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded bg-[#E0F2FE] text-[#075985] border border-[#0369A1]/30';
+        if (syncHeading) {
+          syncHeading.textContent = '雲端靜態盤後儀表板（GitHub Actions 排程更新 / 支援 AI 備援）';
+        }
+        return;
+      }
       if (online && syncing) {
         badge.textContent = '背景同步最新盤後數據中...';
         badge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded bg-[#FEF3C7] text-[#92400E] border border-[#D97706]/35';
@@ -2767,7 +2838,7 @@
 
         return `
           <tr onclick="toggleWatchlistDetail('${escapeHtml(item.code)}')" class="hover:bg-[#FAF7F2] cursor-pointer transition-colors">
-            <td class="py-2.5 px-3 whitespace-nowrap">
+            <td class="py-2.5 px-3 whitespace-nowrap wl-sticky-col">
               <div class="flex items-center gap-1.5">
                 <span class="font-bold text-[#1E2022]">${escapeHtml(item.code)} ${escapeHtml(item.name)}</span>
                 ${catBadge}
@@ -3013,6 +3084,17 @@
       const qDate = formatShortDate(meta.quoteDate || meta.dataDate || '');
       const qTime = meta.quoteTime || '';
       const srcLabel = meta.sourceLabel || meta.quoteSourceLabel || '即時報價';
+      const refreshBtn = document.getElementById('refreshQuoteBtn');
+
+      if (isStaticSiteMode()) {
+        if (refreshBtn) refreshBtn.classList.add('hidden');
+        toggleBtn.classList.add('hidden');
+        dot.className = 'inline-block w-2 h-2 rounded-full rt-dot-closed';
+        textEl.textContent = qTime
+          ? `雲端盤後版 · ${qDate} ${qTime}（每日自動同步）`
+          : '雲端盤後版（每日盤後排程更新）';
+        return;
+      }
 
       if (!backendStatus.ok) {
         dot.className = 'inline-block w-2 h-2 rounded-full rt-dot-closed';
@@ -3142,6 +3224,7 @@
     }
 
     async function fetchRealtimeQuotes(manual = false) {
+      if (isStaticSiteMode()) return;
       if (rtInFlight) return;
       rtInFlight = true;
 
@@ -3247,6 +3330,9 @@
       loadSavedCapital();
       renderHistory();
       initPageMascot();
+      if (window.innerWidth <= 640) {
+        toggleMascotBubble(false);
+      }
       applyPreset('current');
 
       const health = await checkBackendHealth();

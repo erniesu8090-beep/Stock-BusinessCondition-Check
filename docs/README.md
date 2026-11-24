@@ -11,6 +11,16 @@
 - 每次透過 Python 同步後，最新真實收盤數據也會同步寫入 `src/code_artifact.html`。
 - 您也可以直接雙擊打開 `src/code_artifact.html`（不開 Python 也能查看最新寫入的盤勢、調整滑桿、使用個人資金試算器與存取本機歷史紀錄；亦可於「同步設定」內選填自己的 Gemini API Key 做備援 AI 聯網同步）。
 
+## 手機版使用（GitHub Pages 盤後自動託管）
+- 本專案已內建 GitHub Actions 自動排程（`.github/workflows/pages_sync.yml`）與靜態打包腳本（`src/build_pages.py`）。
+- **首次啟用步驟（在住家開發機執行一次即可）**：
+  1. 將最新專案代碼（含 `.github/`、`src/build_pages.py` 與優化後的 `src/code_artifact.html`）推送至 GitHub `main` 分支。
+  2. 開啟 GitHub 倉庫的 **Settings → Pages**，在 Build and deployment 的 **Source** 選擇 **GitHub Actions**。
+  3. 回到 **Actions** 分頁，點選「每日盤後同步與發佈 GitHub Pages」→ **Run workflow** 手動跑第一次即可取得專屬 HTTPS 網址。
+- **日常運作與手機安裝**：
+  - 週一至週五台灣時間約 **16:30 與 21:30** 會於雲端自動抓取官方盤後籌碼與觀察名單收盤價並重新發佈（註：靜態網頁版無盤中 15 秒即時輪詢）。
+  - 手機瀏覽器開啟該網址後，可使用「加入主畫面 / 安裝應用程式」以全螢幕 PWA 模式快速看盤。
+
 ## 數據來源與核心指標
 - **期現貨籌碼**：台灣證交所（三大法人 `BFI82U`、成交統計 `FMTQIK`）與台灣期交所（三大法人期貨未平倉與全市場 OI）。
 - **散戶小微台多空比**：以全市場小台（MTX）加上微台（TMF，依契約規格 1/5 折算等值小台口數）扣除三大法人淨部位後計算散戶真實多空比。
@@ -27,6 +37,8 @@
 - `台股籌碼風險判讀儀表板_操作手冊.pdf`：完整繁體中文圖文操作說明手冊
 - `src/fetcher.py`：台灣證交所／期交所／集保 TDCC／Yahoo Finance 公開數據爬蟲引擎
 - `src/server.py`：本機 API 伺服器、圖示路由與 HTML 內嵌數據更新器
+- `src/build_pages.py`：打包 `_site/` 靜態網站與 PWA manifest 供 GitHub Pages 部署
+- `.github/workflows/pages_sync.yml`：GitHub Actions 每日盤後自動抓數並發佈 Pages 排程
 - `assets/app.ico`、`assets/app_icon.png`：自訂商業軟體程式圖示（多尺寸 `.ico` 與主圖）
 - `assets/mascots/`：右下角互動吉祥物圖檔（`kamran-directions.webp` / `kamran-reactions.webp`）
 - `data/latest_market_data.json`：最新一次抓取的結構化盤後籌碼快取

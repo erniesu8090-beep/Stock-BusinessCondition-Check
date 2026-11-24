@@ -7,5 +7,6 @@ __pycache__/
 .env.*
 !.env.example
 data/*.tmp
+_site/
 *.lnk
 docs/台股低本益比與成長潛力觀察名單.pdf

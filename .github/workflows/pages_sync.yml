@@ -1,0 +1,84 @@
+name: 每日盤後同步與發佈 GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    # 台股交易日盤後自動更新（台灣時間 UTC+8 16:30 與 21:30）
+    - cron: '30 8 * * 1-5'
+    - cron: '30 13 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      force_tdcc:
+        description: '強制重新下載集保中心 TDCC 週檔'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+env:
+  TZ: Asia/Taipei
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+jobs:
+  sync-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 簽出專案代碼
+        uses: actions/checkout@v4
+
+      - name: 設定 Python 3.12 環境
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: 安裝 Python 相依套件
+        run: pip install -r requirements.txt
+
+      - name: 執行官方盤後數據同步
+        run: |
+          if [ "${{ inputs.force_tdcc }}" = "true" ]; then
+            python src/server.py --sync-only --force-tdcc
+          else
+            python src/server.py --sync-only
+          fi
+
+      - name: 回存最新籌碼與集保週歷史快照
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for f in data/latest_market_data.json data/tdcc_weekly_history.json src/code_artifact.html; do
+            if [ -e "$f" ]; then
+              git add "$f"
+            fi
+          done
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: 自動更新台股盤後籌碼與市場數據 [skip ci]"
+            git push
+          else
+            echo "市場數據與既有快照一致，略過提交。"
+          fi
+
+      - name: 建置 GitHub Pages 靜態網站產物
+        run: python src/build_pages.py --output _site
+
+      - name: 上傳 Pages 靜態產物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: 部署至 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

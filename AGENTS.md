@@ -38,3 +38,4 @@
    檢查 `data/latest_market_data.json` 與 `src/code_artifact.html` 是否成功寫入最新有效交易日數值。
 2. 前端 JS 語法檢查：抽出 `src/code_artifact.html` 內所有內嵌 `<script>` 並以 `node --check` 驗證無語法錯誤。
 3. 本機 API 伺服器測試：啟動 `src\server.py` 測試 `GET /`、`GET /api/latest` 與 `POST /api/sync` 回傳 HTTP 200 且結構正確。
+4. 靜態 Pages 建置測試：執行 `.\.venv\Scripts\python.exe src\build_pages.py --output _site` 確認産出 `_site/index.html`、`manifest.webmanifest` 與 `assets/`，並驗 `_site/index.html` 內嵌 `<script>` 通過 `node --check`。

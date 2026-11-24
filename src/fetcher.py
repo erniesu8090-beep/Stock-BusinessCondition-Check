@@ -681,14 +681,15 @@ def fetch_tdcc_distribution(
 
     if not force_refresh and latest_cached_date and target_codes.issubset(cached_snapshot.keys()):
         try:
+            tz_taipei = dt.timezone(dt.timedelta(hours=8))
+            now_dt = dt.datetime.now(tz_taipei)
             cached_dt = dt.datetime.strptime(latest_cached_date, "%Y%m%d").date()
-            ref_dt = dt.date.today()
+            ref_dt = now_dt.date()
             if latest_market_date:
                 try:
                     ref_dt = dt.datetime.strptime(latest_market_date, "%Y-%m-%d").date()
                 except ValueError:
                     pass
-            now_dt = dt.datetime.now()
             days_old = (now_dt.date() - cached_dt).days
             is_fresh = (
                 cached_dt >= ref_dt
@@ -1686,8 +1687,9 @@ def fetch_all_market_data(force_tdcc: bool = False) -> dict[str, Any]:
         f"日線 K={kd_info['k']:.1f} / D={kd_info['d']:.1f}。"
     ]
 
+    tz_taipei = dt.timezone(dt.timedelta(hours=8))
     result: dict[str, Any] = {
-        "fetchedAt": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "fetchedAt": dt.datetime.now(tz_taipei).strftime("%Y-%m-%d %H:%M:%S"),
         "dateLabel": date_label,
         "dataDate": data_date,
         "quoteDate": quote_date,
