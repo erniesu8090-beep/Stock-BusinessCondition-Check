@@ -1,7 +1,7 @@
 # 專案進度交接 (PROGRESS.md)
 
-- **最後更新**：2026-11-24（`controlled`）
-- **目前狀態**：已完成完工收納、離線靜態 CSS 內嵌、盤中零延遲即時股價輪詢（`/api/realtime`），並新增方案 B（GitHub Actions 每日盤後排程 + GitHub Pages 靜態託管與手機小螢幕 RWD／PWA 優化），待使用者帶回住家機 `git push` 啟用 GitHub Pages。
+- **最後更新**：2026-11-25（`home`）
+- **目前狀態**：已完成完工收納、離線靜態 CSS 內嵌、盤中即時股價輪詢（`/api/realtime`）與 GitHub Pages 自動排程託管；並修復 GitHub Actions 排程延遲／連續觸發造成 `git push` 衝突（`fetch first`）及 `deploy-pages` 偶發找不到 artifact 的問題，待確認推送至 GitHub 後實測驗證。
 
 ## 已完成與架構決定
 - 建立專案結構：`start_dashboard.bat`、`src/fetcher.py`、`src/server.py`、`data/latest_market_data.json`、`code_artifact.html`、`AGENTS.md`、`README.md`、`requirements.txt`、`.gitignore`。
@@ -11,7 +11,7 @@
 - 實測通過 `src/server.py --sync-only`、`node --check` JS 語法檢查與本機伺服器端點（`GET /`、`/api/health`、`/api/latest`、`POST /api/sync`），並依規範移除 `SPEC.md`。
 
 ## 下一步
-- 將本次專案改動經 GitSync 帶回住家開發機（`home`）`git push` 至 GitHub `main` 分支，並於 GitHub 倉庫 `Settings -> Pages` 選取 `GitHub Actions` 來源後手動試跑一次工作流以取得手機瀏覽網址。
+- 經使用者確認 `git push` 將工作流修復推送至 `origin/main` 後，觸發一次 `workflow_dispatch` 驗證「回存快照」與「部署至 GitHub Pages」全步驟通過。
 
 ## 待使用者決定
 - 目前無。
@@ -25,3 +25,4 @@
 - 2026-11-23（離線／受限網路靜態 CSS 內嵌修復）：於 `controlled` 環境實測發現 `cdn.tailwindcss.com` 連線遭重置導致整頁排版失效；改以 Tailwind CSS v3 預編譯本頁（含 JS 動態狀態）全部 251 個類別為純靜態 CSS 並直接內嵌進 `src/code_artifact.html` 的 `<style>`，同步移除外部 `cdn.tailwindcss.com` 與 Google Fonts 請求依賴，補上繁中系統字型備援與 `font-size-adjust: from-font`；實測 `--sync-only`、`GET /`、`GET /api/latest`、`POST /api/sync` 及 `node --check` 全數通過。
 - 2026-11-23（盤中即時股價與明細升級）：於 `src/fetcher.py` 抽離 `_compute_stock_entry_metrics()` 並新增 `fetch_realtime_quotes()`（鉅亨網 `ws.api.cnyes.com` 零延遲主抓＋證交所 MIS 自動備援，處理 MIS `z="-"` 撮合空檔），同步於完整同步時疊加零延遲報價；於 `src/server.py` 新增帶 2 秒短快取之 `GET /api/realtime` 與 `/api/health` 的 `realtimeSupported` 標記；於 `src/code_artifact.html` 加入盤中 15 秒自動輪詢（含手動刷新、暫停開關與分頁隱藏暫停）、頂部「籌碼基準日」與「報價時間」分離、加權與台積電即時連動、表格及展開區盤中開高低量明細、價位變動微閃爍與買點／本益比／殖利率即時重算（並補齊靜態內嵌 CSS）；實測 `--sync-only`、靜態 CSS 類別稽核、`node --check` 及 `GET /api/realtime` 全數通過。
 - 2026-11-24（手機版 GitHub Pages 自動化託管方案 B 準備）：於 `src/code_artifact.html` 加入 PWA meta 標籤、手機小螢幕 RWD（釋放 header sticky、表格首欄固定 `.wl-sticky-col`、縮小右下吉祥物與手機預設收合氣泡）及 `isStaticSiteMode()` 雲端靜態模式判斷（跳過無效本機 API 請求並隱藏即時輪詢按鈕）；新增 `src/build_pages.py` 打包 `_site/` 與 `manifest.webmanifest`，新增 `.github/workflows/pages_sync.yml` 設定週一至五 16:30/21:30（UTC+8）自動抓數並回存快照、發佈 Pages；修正 `src/fetcher.py` 兩處補齊台北時區（`UTC+8`）以免雲端 runner UTC 偏移。
+- 2026-11-25（修復 GitHub Actions 自動更新衝突與部署重試）：追查 Actions 歷史日誌發現兩項卡關主因——(1) 排程進入佇列時會凍結舊 `headSha` 且連續觸發排隊後直接 `git push` 觸發 `rejected (fetch first)` 中斷部署；(2) `upload-pages-artifact` 後立即 `deploy-pages` 偶發 `Found 0 artifact(s)`。於 `.github/workflows/pages_sync.yml` 改為簽出指定 `ref: main`（`fetch-depth: 0`）、同步前對齊最新 `origin/main`、回存快照加入最多 3 次 `fetch + rebase` 衝突重試與備援不中斷 Pages 發佈，並於上傳 artifact 後加入 8 秒緩衝與 `deploy-pages` 失敗 15 秒自動重試機制。

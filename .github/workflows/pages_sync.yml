@@ -31,12 +31,15 @@ jobs:
   sync-and-deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deploy_try2.outputs.page_url || steps.deploy_try1.outputs.page_url }}
     runs-on: ubuntu-latest
 
     steps:
-      - name: 簽出專案代碼
+      - name: 簽出最新主分支代碼
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
 
       - name: 設定 Python 3.12 環境
         uses: actions/setup-python@v5
@@ -47,28 +50,65 @@ jobs:
       - name: 安裝 Python 相依套件
         run: pip install -r requirements.txt
 
-      - name: 執行官方盤後數據同步
+      - name: 對齊遠端最新主分支並執行官方盤後數據同步
         run: |
+          git fetch origin main
+          git checkout -B main origin/main
           if [ "${{ inputs.force_tdcc }}" = "true" ]; then
             python src/server.py --sync-only --force-tdcc
           else
             python src/server.py --sync-only
           fi
 
-      - name: 回存最新籌碼與集保週歷史快照
+      - name: 回存最新籌碼與集保週歷史快照（含衝突重試）
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for f in data/latest_market_data.json data/tdcc_weekly_history.json src/code_artifact.html; do
-            if [ -e "$f" ]; then
-              git add "$f"
+
+          stage_snapshots() {
+            for f in data/latest_market_data.json data/tdcc_weekly_history.json src/code_artifact.html; do
+              if [ -e "$f" ]; then
+                git add "$f"
+              fi
+            done
+          }
+
+          stage_snapshots
+          if git diff --cached --quiet; then
+            echo "市場數據與既有快照一致，略過提交。"
+            exit 0
+          fi
+
+          git commit -m "chore: 自動更新台股盤後籌碼與市場數據 [skip ci]"
+          pushed=false
+          for attempt in 1 2 3; do
+            if git push origin main; then
+              pushed=true
+              break
+            fi
+            echo "第 ${attempt} 次推送發生遠端領先衝突，嘗試整合遠端最新變更後重試..."
+            git fetch origin main
+            if ! git rebase origin/main; then
+              echo "偵測到快照檔 rebase 衝突，改以遠端最新主分支為基底重新抓取數據..."
+              git rebase --abort || true
+              git reset --hard origin/main
+              if [ "${{ inputs.force_tdcc }}" = "true" ]; then
+                python src/server.py --sync-only --force-tdcc
+              else
+                python src/server.py --sync-only
+              fi
+              stage_snapshots
+              if git diff --cached --quiet; then
+                echo "對齊遠端最新快照後數據已一致，無需再次提交。"
+                pushed=true
+                break
+              fi
+              git commit -m "chore: 自動更新台股盤後籌碼與市場數據 [skip ci]"
             fi
           done
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: 自動更新台股盤後籌碼與市場數據 [skip ci]"
-            git push
-          else
-            echo "市場數據與既有快照一致，略過提交。"
+
+          if [ "$pushed" != "true" ]; then
+            echo "::warning::連續 3 次 git push 仍遭遇遠端衝突，暫跳過快照回存，繼續建置並部署最新 Pages 網頁。"
           fi
 
       - name: 建置 GitHub Pages 靜態網站產物
@@ -79,6 +119,21 @@ jobs:
         with:
           path: _site
 
+      - name: 等待 Artifact 索引同步
+        run: sleep 8
+
       - name: 部署至 GitHub Pages
-        id: deployment
+        id: deploy_try1
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: 部署失敗緩衝並重試
+        if: steps.deploy_try1.outcome == 'failure'
+        run: |
+          echo "首次部署至 GitHub Pages 未成功（常見為 Artifact API 短暫尚未同步），等待 15 秒後重試..."
+          sleep 15
+
+      - name: 重試部署至 GitHub Pages
+        id: deploy_try2
+        if: steps.deploy_try1.outcome == 'failure'
         uses: actions/deploy-pages@v4
